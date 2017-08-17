@@ -22,3 +22,5 @@ The goal of this project is to create a lightning-fast neural network that can s
 
 ### This project is based on https://github.com/gremerritt/neural-net-OCR
 This project implements OCR with a Neural Network.
+
+MNIST loader by Nuri Park - https://github.com/projectgalateia/mnist
