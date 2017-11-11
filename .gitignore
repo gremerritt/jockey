@@ -3,3 +3,5 @@
 jockey
 main
 *-ubyte
+*.swp
+*.jockey

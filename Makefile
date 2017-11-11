@@ -24,8 +24,8 @@ matrix_helpers.o: matrix_helpers.c matrix_helpers.h
 randomizing_helpers.o: randomizing_helpers.c randomizing_helpers.c
 	$(CC) $(CFLAGS) $(OPENMPFLAG) -c randomizing_helpers.c $(LIBS)
 
-mpi: main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o
-	$(MPICC) $(CFLAGS) $(LIBS) main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o -o $(EXEC)
+mpi: main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o
+	$(MPICC) $(CFLAGS) $(LIBS) main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o -o $(EXEC)
 
 main_mpi.o: main.c
 	$(MPICC) $(CFLAGS) -c main.c $(LIBS) -o main_mpi.o
@@ -44,6 +44,9 @@ mpi_helper_mpi.o: mpi_helper.c mpi_helper.h
 
 helpers_mpi.o: helpers.c helpers.h
 	$(CC) $(CFLAGS) -c helpers.c $(LIBS) -o helpers_mpi.o
+
+file_helpers_mpi.o: file_helpers.c helpers.h
+	$(CC) $(CFLAGS) -c file_helpers.c $(LIBS) -o file_helpers_mpi.o
 
 clean:
 	rm -r *.o *.dSYM $(EXEC) 2> /dev/null
