@@ -1,7 +1,9 @@
 #ifndef FILEHELPERS_H
 #define FILEHELPERS_H
 
+#include <stdio.h>
 #include "neural_net.h"
+#include "mpi_helper.h"
 
 typedef struct jcky_file {
     FILE *stream;

@@ -67,9 +67,9 @@ char jcky_write_file(nn_type **data, nn_type **targets, const unsigned int recor
 void jcky_read_record(jcky_file *file, const unsigned int record, nn_type *batch, nn_type *targets) {
     const unsigned long int offset = file->offset + (file->bytes_per_record * record);
     fseek(file->stream, offset, SEEK_SET);
-    fread(&batch, file->datum_size, file->data_len, file->stream);
+    fread(batch, file->datum_size, file->data_len, file->stream);
     fseek(file->stream, offset + file->bytes_per_data, SEEK_SET);
-    fread(&targets, file->datum_size, file->targets_len, file->stream);
+    fread(targets, file->datum_size, file->targets_len, file->stream);
 }
 
 

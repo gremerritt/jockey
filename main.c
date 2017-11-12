@@ -14,6 +14,7 @@
 #include "matrix_helpers.h"
 #include "mpi_helper.h"
 #include "file_helpers.h"
+#include "batch.h"
 //#include <omp.h>
 #include <mpi.h>
 
@@ -30,32 +31,6 @@
 #define KRED "\x1B[31m"
 #define KGRN "\x1B[32m"
 
-// void create_batch_with_sequence(nn_type *batch,
-//                                 int *label,
-//                                 mnist_data *data,
-//                                 int batch_size,
-//                                 const unsigned int iteration,
-//                                 unsigned int *sequence);
-// void create_batch_no_sequence(nn_type *batch,
-// 	                          int *label,
-// 							  mnist_data *data,
-// 							  int batch_size,
-//                               const unsigned int iteration,
-//                               unsigned short int rank,
-//                               sample_manager *sample_manager);
-void create_batch_with_sequence_file(nn_type *batch,
-                                     nn_type *targets,
-                                     jcky_file *file,
-                                     const unsigned int batch_size,
-                                     const unsigned int iteration,
-                                     unsigned int *sequence);
-void create_batch_no_sequence_file(nn_type *batch,
-	                               nn_type *targets,
-							       jcky_file *file,
-							       const unsigned int batch_size,
-                                   const unsigned int iteration,
-                                   unsigned short int rank,
-                                   sample_manager *sample_manager);
 // void print_result(int iter,
 // 	              int *label,
 //                   nn_type *result,
@@ -285,76 +260,6 @@ int main(int argc, char **argv) {
 mpi_finalize:
     MPI_Finalize();
 	return 0;
-}
-
-// void create_batch_with_sequence(
-//     nn_type *batch,
-//     int *label,
-//     mnist_data *data,
-//     int batch_size,
-//     const unsigned int iteration,
-//     unsigned int *sequence)
-// {
-//     const unsigned int offset = iteration * batch_size;
-//     unsigned short int i;
-// 	unsigned int j, seq_index;
-// 	for (i=0; i<batch_size; i++) {
-//         seq_index = i + offset;
-// 		label[i] = data[sequence[seq_index]].label;
-// 		for (j=0; j<DATA_SIZE; j++) {
-// 			batch[(j*batch_size) + i] = data[sequence[seq_index]].data[j];
-// 		}
-// 	}
-// }
-
-void create_batch_with_sequence_file(
-    nn_type *batch,
-    nn_type *targets,
-    jcky_file *file,
-    const unsigned int batch_size,
-    const unsigned int iteration,
-    unsigned int *sequence)
-{
-    const unsigned int offset = iteration * batch_size;
-    unsigned short int i;
-	for (i=0; i<batch_size; i++) {
-        jcky_read_record(file, offset + i, batch + (i * file->data_len), targets + (i * file->targets_len));
-	}
-}
-
-// void create_batch_no_sequence(nn_type *batch,
-// 	                          int *label,
-// 							  mnist_data *data,
-// 							  int batch_size,
-//                               const unsigned int iteration,
-//                               unsigned short int rank,
-//                               sample_manager *sample_manager)
-// {
-//     const unsigned int offset = (iteration * batch_size) + (rank * (*sample_manager).base);
-//     unsigned short int i;
-// 	unsigned int j, data_index;
-// 	for (i=0; i<batch_size; i++) {
-//         data_index = i + offset;
-// 		label[i] = data[data_index].label;
-// 		for (j=0; j<DATA_SIZE; j++) {
-// 			batch[(j*batch_size) + i] = data[data_index].data[j];
-// 		}
-// 	}
-// }
-
-void create_batch_no_sequence_file(nn_type *batch,
-	                               nn_type *targets,
-							       jcky_file *file,
-							       const unsigned int batch_size,
-                                   const unsigned int iteration,
-                                   unsigned short int rank,
-                                   sample_manager *sample_manager)
-{
-    const unsigned int offset = (iteration * batch_size) + (rank * (*sample_manager).base);
-    unsigned short int i;
-	for (i=0; i<batch_size; i++) {
-        jcky_read_record(file, offset + i, batch + (i * file->data_len), targets + (i * file->targets_len));
-	}
 }
 
 // void print_result(int iter, int *label, nn_type *result, char *correct)

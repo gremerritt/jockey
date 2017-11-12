@@ -7,7 +7,8 @@ UNAME = $(shell uname)
 ifneq ($(UNAME),Darwin)
   LIBS += -lrt -lm
 endif
-EXEC = main
+EXEC = jockey
+TEST_EXEC = test
 
 main: main.o neural_net.o matrix_helpers.o randomizing_helpers.o
 	$(CC) $(CFLAGS) $(OPENMPFLAG) main.o neural_net.o matrix_helpers.o randomizing_helpers.o -o $(EXEC) $(LIBS)
@@ -24,8 +25,8 @@ matrix_helpers.o: matrix_helpers.c matrix_helpers.h
 randomizing_helpers.o: randomizing_helpers.c randomizing_helpers.c
 	$(CC) $(CFLAGS) $(OPENMPFLAG) -c randomizing_helpers.c $(LIBS)
 
-mpi: main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o
-	$(MPICC) $(CFLAGS) $(LIBS) main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o -o $(EXEC)
+mpi: main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o batch_mpi.o
+	$(MPICC) $(CFLAGS) $(LIBS) main_mpi.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o batch_mpi.o -o $(EXEC)
 
 main_mpi.o: main.c
 	$(MPICC) $(CFLAGS) -c main.c $(LIBS) -o main_mpi.o
@@ -48,5 +49,14 @@ helpers_mpi.o: helpers.c helpers.h
 file_helpers_mpi.o: file_helpers.c helpers.h
 	$(CC) $(CFLAGS) -c file_helpers.c $(LIBS) -o file_helpers_mpi.o
 
+batch_mpi.o: batch.c batch.h
+	$(CC) $(CFLAGS) -c batch.c $(LIBS) -o batch_mpi.o
+
+test: test.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o batch_mpi.o
+	$(MPICC) $(CFLAGS) $(LIBS) test.o neural_net_mpi.o helpers_mpi.o matrix_helpers_mpi.o randomizing_helpers_mpi.o mpi_helper.o file_helpers_mpi.o batch_mpi.o -o $(TEST_EXEC)
+
+test.o: test.c
+	$(MPICC) $(CFLAGS) -c test.c $(LIBS) -o test.o
+
 clean:
-	rm -r *.o *.dSYM $(EXEC) 2> /dev/null
+	rm -r *.o *.dSYM *.swp $(EXEC) $(TEST_EXEC) 2> /dev/null
