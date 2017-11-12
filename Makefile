@@ -9,7 +9,7 @@ ifneq ($(UNAME),Darwin)
 endif
 EXEC = jockey
 TEST_EXEC = test
-MODULES = neural_net.o helpers.o matrix_helpers.o randomizing_helpers.o mpi_helper.o file_helpers.o batch.o
+MODULES = neural_net.o helpers.o matrix_helpers.o randomizing_helpers.o mpi_helper.o file_helpers.o batch.o hooks.o
 
 mpi: main.o $(MODULES)
 	$(MPICC) $(CFLAGS) $(LIBS) main.o $(MODULES) -o $(EXEC)
@@ -37,6 +37,9 @@ file_helpers.o: file_helpers.c helpers.h
 
 batch.o: batch.c batch.h
 	$(CC) $(CFLAGS) -c batch.c $(LIBS) -o batch.o
+
+hooks.o: hooks.c hooks.h
+	$(CC) $(CFLAGS) -c hooks.c $(LIBS) -o hooks.o
 
 test: test.o $(MODULES)
 	$(MPICC) $(CFLAGS) $(LIBS) test.o $(MODULES) -o $(TEST_EXEC)

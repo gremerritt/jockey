@@ -1,12 +1,10 @@
-#define USE_MNIST_LOADER
-#define MNIST_DOUBLE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <limits.h>
-#include "mnist.h"
+#include <mpi.h>
+
 #include "constants.h"
 #include "helpers.h"
 #include "neural_net.h"
@@ -15,8 +13,7 @@
 #include "mpi_helper.h"
 #include "file_helpers.h"
 #include "batch.h"
-//#include <omp.h>
-#include <mpi.h>
+#include "hooks.h"
 
 #define NUM_NODES_IN_HIDDEN_LAYERS 60
 #define NUM_HIDDEN_LAYERS 2
@@ -35,7 +32,6 @@
 // 	              int *label,
 //                   nn_type *result,
 // 				  char *correct);
-int write_file();
 unsigned char process_command_line(
     int argc,
     char **argv,
@@ -65,10 +61,6 @@ int main(int argc, char **argv) {
     char testing_filename[128] = "\0";
     jcky_file training_file;
     jcky_file testing_file;
-
-    // DELETE ME
-    mnist_data *training_data;
-    mnist_data *testing_data;
 
     unsigned char pcl = process_command_line(
         argc,
@@ -254,8 +246,6 @@ int main(int argc, char **argv) {
 
     destroy_mpi_manager(&mpi_manager);
     destroy_meta_nn(&neural_net);
-	free(training_data);
-	free(testing_data);
 
 mpi_finalize:
     MPI_Finalize();
@@ -401,74 +391,4 @@ unsigned char process_command_line(
     }
 
     return err;
-}
-
-int write_file() {
-    int i, j, ret = 0;
-    mnist_data *training_data;
-    mnist_data *testing_data;
-    unsigned int training_cnt, testing_cnt;
-    nn_type **training_data_writable, **training_labels_writable;
-    nn_type **testing_data_writable, **testing_labels_writable;
-
-    printf("Loading training image set... ");
-	ret = mnist_load("train-images-idx3-ubyte", "train-labels-idx1-ubyte", &training_data, &training_cnt);
-	if (ret) {
-		printf("An error occured: %d\n", ret);
-		printf("Make sure image files (*-ubyte) are in the current directory.\n");
-		return ret;
-	}
-	else {
-		printf("Success!\n");
-		printf("  Image count: %d\n", training_cnt);
-	}
-
-	printf("\nLoading test image set... ");
-	ret = mnist_load("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", &testing_data, &testing_cnt);
-	if (ret) {
-		printf("An error occured: %d\n", ret);
-		printf("Make sure image files (*-ubyte) are in the current directory.\n");
-		return ret;
-	}
-	else {
-		printf("Success!\n");
-		printf("  Image count: %d\n", testing_cnt);
-	}
-
-    training_data_writable = malloc( training_cnt * sizeof( nn_type* ));
-    training_labels_writable = malloc( training_cnt * sizeof( nn_type* ));
-    for(i=0; i<training_cnt; i++) {
-        training_data_writable[i] = training_data[i].data;
-        training_labels_writable[i] = (nn_type *)malloc( 10 * sizeof( nn_type ) );
-        for(j=0; j<10; j++) training_labels_writable[i][j] = (nn_type)((j == training_data[i].label) ? 1.0 : 0.0);
-    }
-
-    testing_data_writable = malloc( testing_cnt * sizeof( nn_type* ));
-    testing_labels_writable = malloc( testing_cnt * sizeof( nn_type* ));
-    for(i=0; i<testing_cnt; i++) {
-        testing_data_writable[i] = testing_data[i].data;
-        testing_labels_writable[i] = (nn_type *)malloc( 10 * sizeof( nn_type ) );
-        for(j=0; j<10; j++) testing_labels_writable[i][j] = (nn_type)((j == testing_data[i].label) ? 1.0 : 0.0);
-    }
-
-    printf("Writing training file... ");
-    ret = jcky_write_file(training_data_writable, training_labels_writable, training_cnt, 28*28, 10, "training.jockey");
-    if (ret) printf("Failed.\n");
-    else printf("Success!\n");
-
-    printf("Writing testing file... ");
-    ret = jcky_write_file(testing_data_writable, testing_labels_writable, testing_cnt, 28*28, 10, "testing.jockey");
-    if (ret) printf("Failed.\n");
-    else printf("Success!\n");
-
-    for(i=0; i<training_cnt; i++) {
-        free(training_labels_writable[i]);
-    }
-    for(i=0; i<testing_cnt; i++) {
-        free(testing_labels_writable[i]);
-    }
-    free(training_data_writable);
-    free(testing_data_writable);
-
-    return ret;
 }
