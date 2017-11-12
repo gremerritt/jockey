@@ -156,8 +156,8 @@ jcky_file jcky_open_file(char *filename) {
 }
 
 
-int jcky_close_file(jcky_file file) {
-    return fclose(file.stream);
+char jcky_close_file(jcky_file file) {
+    return (char)fclose(file.stream);
 }
 
 

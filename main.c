@@ -259,6 +259,8 @@ int main(int argc, char **argv) {
 
 mpi_finalize:
     MPI_Finalize();
+    jcky_close_file(training_file);
+    jcky_close_file(testing_file);
 	return 0;
 }
 
