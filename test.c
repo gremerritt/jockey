@@ -74,12 +74,25 @@ int main(int argc, char **argv) {
     for(i=0; i<RECORDS / BATCH; i++) {
         create_batch_with_sequence_file(batch_data, batch_targets, &file, BATCH, i, sequence);
         for(j=0; j<(BATCH * DATA_LEN); j++) {
-            assert((batch_data[j] == test_data[sequence[(i * BATCH) + (j / DATA_LEN)]][j % DATA_LEN]) &&
-                   "Invalid data batch\n");
+            assert((batch_data[j] == test_data[sequence[(i * BATCH) + (j % DATA_LEN)]][j / DATA_LEN]) &&
+                   "Invalid data batch from sequence\n");
         }
         for(j=0; j<(BATCH * TARGETS_LEN); j++) {
             assert((batch_targets[j] == test_targets[sequence[(i * BATCH) + (j / TARGETS_LEN)]][j % TARGETS_LEN]) &&
-                   "Invalid targets batch\n");
+                   "Invalid targets batch from sequence\n");
+        }
+    }
+    printf(".");
+
+    for(i=0; i<RECORDS / BATCH; i++) {
+        create_batch_no_sequence_file(batch_data, batch_targets, &file, BATCH, i, 0, RECORDS);
+        for(j=0; j<(BATCH * DATA_LEN); j++) {
+            assert((batch_data[j] == test_data[(i * BATCH) + (j % DATA_LEN)][j / DATA_LEN]) &&
+                   "Invalid data batch without sequence\n");
+        }
+        for(j=0; j<(BATCH * TARGETS_LEN); j++) {
+            assert((batch_targets[j] == test_targets[(i * BATCH) + (j / TARGETS_LEN)][j % TARGETS_LEN]) &&
+                   "Invalid targets batch without sequence\n");
         }
     }
     printf(".");

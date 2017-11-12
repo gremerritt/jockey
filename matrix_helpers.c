@@ -37,17 +37,18 @@ inline void sigmoidify(nn_type *activation,
 inline void delta_output_layer(nn_type *delta,
                         nn_type *activation,
                         nn_type *z_matrix,
-                        int *target_value,
+                        nn_type *target_values,
                         int outputs,
                         int batch_size)
 {
-  int i, j, target, index;
+  int i, j, offset, target, index;
 
   for (i=0; i<batch_size; i++) {
-    target = target_value[i];
+    // target = target_value[i];
+    offset = i * outputs;
     for (j=0; j<outputs; j++) {
       index = (j*batch_size) + i;
-      delta[index] = (activation[index] - ((j == target) ? 1.0 : 0.0)) * sigmoidPrime(z_matrix[index]);
+      delta[index] = (activation[index] - target_values[offset + j]) * sigmoidPrime(z_matrix[index]);
     }
   }
 }

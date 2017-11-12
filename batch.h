@@ -19,7 +19,7 @@ void create_batch_no_sequence_file(
     const unsigned int batch_size,
     const unsigned int iteration,
     unsigned short int rank,
-    sample_manager *sample_manager
+    unsigned int process_offset
 );
 
 #endif

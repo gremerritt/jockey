@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "constants.h"
 #include "mpi_helper.h"
 #include "neural_net.h"
@@ -452,7 +453,7 @@ void nn_apply_changes_logical(struct meta_neural_net *meta) {
 void feed_forward(struct meta_neural_net *meta,
                   nn_type *result,
                   nn_type *activation_initial,
-                  int *target_value,
+                  nn_type *target_values,
                   char training,
                   unsigned int *count,
                   char *correct)
@@ -527,20 +528,31 @@ void feed_forward(struct meta_neural_net *meta,
   for (i=0; i<num_outputs; i++) result[i] = meta->activation[number_of_hidden_layers][i];
 
   if (training == JCKY_TRAIN) {
-        backpropagate(meta, activation_initial, target_value);
+        backpropagate(meta, activation_initial, target_values);
     }
   else {
     for (i=0; i<batch_size; i++) {
       nn_type max = 0.0;
       int max_index = 0;
+
+      int target_value_index = 0;
+      nn_type max_target_value = 0.0;
+
       for (j=0; j<number_of_outputs; j++) {
         if (meta->activation[number_of_hidden_layers][(j*batch_size)+i] > max) {
           max = meta->activation[number_of_hidden_layers][(j*batch_size)+i];
           max_index = j;
         }
+
+        if (target_values[(i*number_of_outputs)+j] > max_target_value) {
+          max_target_value = target_values[(i*number_of_outputs)+j];
+          target_value_index = j;
+        }
       }
 
-      if (max_index == target_value[i]) {
+    //   printf("max index:    %i\n", max_index);
+    //   printf("target index: %i\n---\n", target_value_index);
+      if (max_index == target_value_index) {
         (*count)++;
         correct[i] = max_index;
       }
@@ -551,7 +563,7 @@ void feed_forward(struct meta_neural_net *meta,
 
 void backpropagate(struct meta_neural_net *meta,
                    nn_type *activation_initial,
-                   int *target_value)
+                   nn_type *target_values)
 {
   int i;
   int number_of_hidden_layers          = meta->number_of_hidden_layers;
@@ -565,7 +577,7 @@ void backpropagate(struct meta_neural_net *meta,
   delta_output_layer(meta->delta[number_of_hidden_layers],
                      meta->activation[number_of_hidden_layers],
                      meta->z_matrix[number_of_hidden_layers],
-                     target_value,
+                     target_values,
                      number_of_outputs,
                      batch_size);
 

@@ -22,7 +22,7 @@
 #define NUM_HIDDEN_LAYERS 2
 #define LEARNING_RATE 1.5
 #define BATCH_SIZE 5
-#define EPOCHS 3
+#define EPOCHS 20
 #define TRAINING_SAMPLES 60000
 #define TEST_SAMPLES 10000
 #define TEST_PRINT_RESULTS_EVERY 100000
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
     unsigned int total_count;
 	int epoch;
 	int i;
-	unsigned int *sequence = malloc( mpi_manager.training_samples.total_len * sizeof(int) );
+	unsigned int *sequence = malloc( mpi_manager.training_samples.total_len * sizeof(unsigned int) );
 
 	if (mpi_manager.master) printf("Training...\n");
     const unsigned int training_batches = mpi_manager.training_samples.batches;
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
 			char correct[neural_net.batch_size];
 
 			create_batch_with_sequence_file(batch, targets, &training_file, neural_net.batch_size, i, sequence);
-			feed_forward(&neural_net, result, batch, targets, JCKY_TRAIN, &local_count, correct);
+            feed_forward(&neural_net, result, batch, targets, JCKY_TRAIN, &local_count, correct);
 		}
 		//training_t2 = omp_get_wtime();
 		//training_duration = (training_t2 - training_t1);
@@ -216,8 +216,8 @@ int main(int argc, char **argv) {
 			nn_type targets[neural_net.number_of_outputs * neural_net.batch_size];
 			char correct[neural_net.batch_size];
 
-			create_batch_no_sequence_file(batch, targets, &testing_file, neural_net.batch_size, i, mpi_manager.rank, &(mpi_manager.testing_samples));
-			feed_forward(&neural_net, result, batch, targets, JCKY_TEST, &local_count, correct);
+			create_batch_no_sequence_file(batch, targets, &testing_file, neural_net.batch_size, i, mpi_manager.rank, mpi_manager.testing_samples.base);
+            feed_forward(&neural_net, result, batch, targets, JCKY_TEST, &local_count, correct);
             //if (mpi_manager.master) printf(" - %i correct\n", count);
 			// if (mpi_manager.master && i != 0 && i%TEST_PRINT_RESULTS_EVERY == 0) {
 			// 	print_result(i, label, result, correct);
@@ -438,17 +438,17 @@ int write_file() {
     training_data_writable = malloc( training_cnt * sizeof( nn_type* ));
     training_labels_writable = malloc( training_cnt * sizeof( nn_type* ));
     for(i=0; i<training_cnt; i++) {
-        training_data_writable[i] = training_data->data;
+        training_data_writable[i] = training_data[i].data;
         training_labels_writable[i] = (nn_type *)malloc( 10 * sizeof( nn_type ) );
-        for(j=0; j<10; j++) training_labels_writable[i][j] = (nn_type)((j == training_data->label) ? 1.0 : 0.0);
+        for(j=0; j<10; j++) training_labels_writable[i][j] = (nn_type)((j == training_data[i].label) ? 1.0 : 0.0);
     }
 
     testing_data_writable = malloc( testing_cnt * sizeof( nn_type* ));
     testing_labels_writable = malloc( testing_cnt * sizeof( nn_type* ));
     for(i=0; i<testing_cnt; i++) {
-        testing_data_writable[i] = testing_data->data;
+        testing_data_writable[i] = testing_data[i].data;
         testing_labels_writable[i] = (nn_type *)malloc( 10 * sizeof( nn_type ) );
-        for(j=0; j<10; j++) testing_labels_writable[i][j] = (nn_type)((j == testing_data->label) ? 1.0 : 0.0);
+        for(j=0; j<10; j++) testing_labels_writable[i][j] = (nn_type)((j == testing_data[i].label) ? 1.0 : 0.0);
     }
 
     printf("Writing training file... ");
@@ -457,7 +457,7 @@ int write_file() {
     else printf("Success!\n");
 
     printf("Writing testing file... ");
-    jcky_write_file(testing_data_writable, testing_labels_writable, testing_cnt, 28*28, 10, "testing.jockey");
+    ret = jcky_write_file(testing_data_writable, testing_labels_writable, testing_cnt, 28*28, 10, "testing.jockey");
     if (ret) printf("Failed.\n");
     else printf("Success!\n");
 

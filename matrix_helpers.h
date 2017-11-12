@@ -39,7 +39,7 @@ inline void sigmoidify(nn_type *activation,
 inline void delta_output_layer(nn_type *delta,
                         nn_type *activation,
                         nn_type *z_matrix,
-                        int *target_value,
+                        nn_type *target_values,
                         int outputs,
                         int batch_size);
 

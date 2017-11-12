@@ -113,7 +113,7 @@ void feed_forward(
     struct meta_neural_net *meta,
     nn_type *result,
     nn_type *activation_initial,
-    int *target_value,
+    nn_type *target_values,
     char training,
     unsigned int *count,
     char *correct
@@ -122,7 +122,7 @@ void feed_forward(
 void backpropagate(
     struct meta_neural_net *meta,
     nn_type *activation_initial,
-    int *target_value
+    nn_type *target_values
 );
 
 #endif
