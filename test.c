@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     ret = jcky_close_file(file);
     assert((ret == 0) && "Unable to close jockey file.\n");
-    printf(".")
+    printf(".");
 
     printf("\nAll tests passed!\n");
     remove(FILENAME);
