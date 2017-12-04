@@ -13,11 +13,6 @@
 #include "neural_net.h"
 #include "randomizing_helpers.h"
 
-#define NUM_NODES_IN_HIDDEN_LAYERS 60
-#define NUM_HIDDEN_LAYERS 2
-#define LEARNING_RATE 1.5
-#define BATCH_SIZE 5
-#define EPOCHS 20
 #define TRAINING_SAMPLES 60000
 #define TEST_SAMPLES 10000
 #define TEST_PRINT_RESULTS_EVERY 100000
@@ -28,19 +23,27 @@
 
 
 int main(int argc, char **argv) {
-    int number_of_hidden_layers = NUM_HIDDEN_LAYERS;
-    int number_of_nodes_in_hidden_layers = NUM_NODES_IN_HIDDEN_LAYERS;
-    int batch_size = BATCH_SIZE;
-    nn_type learning_rate = LEARNING_RATE;
-    int seed = -1;
-    unsigned char memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
-    unsigned char num_blocks = 0;
-    unsigned int block_size = 0;
-    unsigned char action = JCKY_ACTION_RUN;
-    char training_filename[128] = "\0";
-    char testing_filename[128] = "\0";
-    jcky_file training_file;
-    jcky_file testing_file;
+    // int number_of_hidden_layers = NUM_HIDDEN_LAYERS;
+    // int number_of_nodes_in_hidden_layers = NUM_NODES_IN_HIDDEN_LAYERS;
+    // int batch_size = BATCH_SIZE;
+    // nn_type learning_rate = LEARNING_RATE;
+    // int seed = -1;
+    // unsigned char memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+    // unsigned char num_blocks = 0;
+    // unsigned int block_size = 0;
+    // unsigned char action = JCKY_ACTION_RUN;
+    // char training_filename[128] = "\0";
+    // char testing_filename[128] = "\0";
+    // jcky_file training_file;
+    // jcky_file testing_file;
+
+    int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
+    nn_type learning_rate;
+    unsigned char memory_layout, num_blocks, action;
+    unsigned int block_size;
+    unsigned short int epochs;
+    char training_filename[128], testing_filename[128];
+    jcky_file training_file, testing_file;
 
     unsigned char pcl = process_command_line(
         argc,
@@ -49,6 +52,7 @@ int main(int argc, char **argv) {
         &number_of_nodes_in_hidden_layers,
         &batch_size,
         &learning_rate,
+        &epochs,
         &seed,
         &memory_layout,
         &num_blocks,
@@ -57,6 +61,7 @@ int main(int argc, char **argv) {
         training_filename,
         testing_filename
     );
+    printf("post cli\n");
     if (pcl != 0) return -1;
     else if (action == JCKY_ACTION_WRITE) {
         return write_file();
@@ -81,11 +86,11 @@ int main(int argc, char **argv) {
 	double training_t1, training_t2, training_duration;
 	double syncing_t1, syncing_t2, syncing_duration;
 	double testing_t1, testing_t2, testing_duration;
-	int counts[EPOCHS];
-	double epoch_times[EPOCHS];
-	double training_times[EPOCHS];
-	double syncing_times[EPOCHS];
-	double testing_times[EPOCHS];
+	// int counts[EPOCHS];
+	// double epoch_times[EPOCHS];
+	// double training_times[EPOCHS];
+	// double syncing_times[EPOCHS];
+	// double testing_times[EPOCHS];
     unsigned short int k;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -129,6 +134,7 @@ int main(int argc, char **argv) {
     	printf("\n  Nodes in Hidden Layers: %i", neural_net.number_of_nodes_in_hidden_layers);
     	printf("\n  Batch Size:             %i", neural_net.batch_size);
     	printf("\n  Learning Rate:          %f", neural_net.eta);
+        printf("\n  Epochs:                 %i", epochs);
         printf("\n  Initialization Seed:    %i", neural_net.seed);
     	printf("\n------------------\n");
     }
@@ -145,7 +151,7 @@ int main(int argc, char **argv) {
     const unsigned int training_batches = mpi_manager.training_samples.batches;
     const unsigned int testing_batches = mpi_manager.testing_samples.batches;
     const unsigned short int child_procs = mpi_manager.child_procs;
-	for (epoch=0; epoch<EPOCHS; epoch++) {
+	for (epoch=0; epoch<epochs; epoch++) {
 		if (mpi_manager.master) printf("  Epoch %i\n", epoch);
 		//epoch_t1 = omp_get_wtime();
         neural_net.functions->copy(&neural_net, JCKY_NN_SCRATCH, JCKY_NN_BASE);

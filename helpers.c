@@ -25,16 +25,30 @@ unsigned char process_command_line(
     int *number_of_nodes_in_hidden_layers,
     int *batch_size,
     nn_type *learning_rate,
+    unsigned short int *epochs,
     int *seed,
-    unsigned char *nn_alloc_method,
-    unsigned char *nn_num_blocks,
-    unsigned int *nn_block_size,
+    unsigned char *memory_layout,
+    unsigned char *num_blocks,
+    unsigned int *block_size,
     unsigned char *action,
     char *training_filename,
     char *testing_filename)
 {
 	int i;
     unsigned char err = 0;
+
+    *number_of_hidden_layers = DEFAULT_NUM_HIDDEN_LAYERS;
+    *number_of_nodes_in_hidden_layers = DEFAULT_NUM_NODES_IN_HIDDEN_LAYERS;
+    *batch_size = DEFAULT_BATCH_SIZE;
+    *learning_rate = DEFAULT_LEARNING_RATE;
+    *seed = -1;  // Signal to generate a random seed
+    *memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+    *epochs = DEFAULT_EPOCHS;
+    *num_blocks = 0;
+    *block_size = 0;
+    *action = JCKY_ACTION_RUN;
+    training_filename[0] = '\0';
+    testing_filename[0] = '\0';
 
 	for (i=1; i<argc; i++) {
 		char *str   = argv[i];
@@ -57,15 +71,19 @@ unsigned char process_command_line(
 				 (strncmp(param, "--lr", 4) == 0)) {
 			*learning_rate = (nn_type)strtod( strtok(val, " "), NULL);
 		}
+        else if ((strncmp(param, "--epochs", 8) == 0) ||
+				 (strncmp(param, "--e", 3) == 0)) {
+			*epochs = (unsigned short int)strtol( strtok(val, " "), NULL, 10);
+		}
         else if (strncmp(param, "--seed", 6) == 0) {
 			*seed = (int)strtol( strtok(val, " "), NULL, 10);
 		}
         else if (strncmp(param, "--memory-layout", 15) == 0) {
             if (strncmp(val, JCKY_CONTIGUOUS_LAYOUT, strlen(JCKY_CONTIGUOUS_LAYOUT)) == 0) {
-                *nn_alloc_method = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+                *memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
             }
             else if (strncmp(val, JCKY_LOGICAL_LAYOUT, strlen(JCKY_LOGICAL_LAYOUT)) == 0) {
-                *nn_alloc_method = (unsigned char)JCKY_LOGICAL_LAYOUT_ID;
+                *memory_layout = (unsigned char)JCKY_LOGICAL_LAYOUT_ID;
             }
             else {
                 printf("Error: Unknown option '%s' for memory-layout.\n", val);
@@ -74,32 +92,32 @@ unsigned char process_command_line(
             }
         }
         else if (strncmp(param, "--blocks", 8) == 0) {
-            unsigned long tmp_nn_num_blocks = strtoul( strtok(val, " "), NULL, 10);
-            if ((tmp_nn_num_blocks < 1) || (tmp_nn_num_blocks > UCHAR_MAX)) {
-                printf("Error: Invalid value %lu for 'blocks'. Must be between 1 and %u.\n", tmp_nn_num_blocks, UCHAR_MAX);
+            unsigned long tmp_num_blocks = strtoul( strtok(val, " "), NULL, 10);
+            if ((tmp_num_blocks < 1) || (tmp_num_blocks > UCHAR_MAX)) {
+                printf("Error: Invalid value %lu for 'blocks'. Must be between 1 and %u.\n", tmp_num_blocks, UCHAR_MAX);
                 err = 1;
                 break;
             }
             else {
-                *nn_num_blocks = (unsigned char)tmp_nn_num_blocks;
+                *num_blocks = (unsigned char)tmp_num_blocks;
             }
         }
         else if (strncmp(param, "--block-size", 12) == 0) {
-            unsigned long tmp_nn_block_size = strtoul( strtok(val, " "), NULL, 10);
-            if (tmp_nn_block_size % sizeof(nn_type) != 0) {
+            unsigned long tmp_block_size = strtoul( strtok(val, " "), NULL, 10);
+            if (tmp_block_size % sizeof(nn_type) != 0) {
                 printf("Error: Invalid value %lu for 'blocks'. Must be divisible by %lu.\n",
-                    tmp_nn_block_size, sizeof(nn_type));
+                    tmp_block_size, sizeof(nn_type));
                 err = 1;
                 break;
             }
-            else if ((tmp_nn_block_size < 1) || ((tmp_nn_block_size / sizeof(nn_type) > INT_MAX))) {
+            else if ((tmp_block_size < 1) || ((tmp_block_size / sizeof(nn_type) > INT_MAX))) {
                 printf("Error: Invalid value %lu for 'blocks'. Must be between 1 and %lu.\n",
-                    tmp_nn_block_size, INT_MAX * sizeof(nn_type));
+                    tmp_block_size, INT_MAX * sizeof(nn_type));
                 err = 1;
                 break;
             }
             else {
-                *nn_block_size = (unsigned int)tmp_nn_block_size;
+                *block_size = (unsigned int)tmp_block_size;
             }
         }
         else if (strncmp(param, "--write", 7) == 0) {
@@ -124,10 +142,10 @@ unsigned char process_command_line(
 	}
 
     if (!err) {
-        if ((*nn_alloc_method == JCKY_LOGICAL_LAYOUT_ID) && (*nn_num_blocks || *nn_block_size)) {
+        if ((*memory_layout == JCKY_LOGICAL_LAYOUT_ID) && (*num_blocks || *block_size)) {
             printf("Warning: 'blocks' and 'block-size' parameters have no effect when using logical memory layout.\n");
         }
-        if ((*nn_alloc_method == JCKY_CONTIGUOUS_LAYOUT_ID) && *nn_num_blocks && *nn_block_size) {
+        if ((*memory_layout == JCKY_CONTIGUOUS_LAYOUT_ID) && *num_blocks && *block_size) {
             printf("Error: 'blocks' and 'block-size' parameters are mutually exclusive.\n");
             err = 1;
         }
