@@ -5,6 +5,7 @@
 #include "neural_net.h"
 #include "matrix_helpers.h"
 #include "randomizing_helpers.h"
+#include "hooks.h"
 
 functions contiguous_functions = {
     .alloc = nn_alloc_contiguous,
@@ -455,8 +456,7 @@ void feed_forward(struct meta_neural_net *meta,
                   nn_type *activation_initial,
                   nn_type *target_values,
                   char training,
-                  unsigned int *count,
-                  char *correct)
+                  double *score)
 {
   int i, j;
   int number_of_nodes_in_hidden_layers = meta->number_of_nodes_in_hidden_layers;
@@ -525,39 +525,15 @@ void feed_forward(struct meta_neural_net *meta,
   //---------------------------------------------------------------------------
 
   int num_outputs = number_of_outputs * batch_size;
-  for (i=0; i<num_outputs; i++) result[i] = meta->activation[number_of_hidden_layers][i];
+  for (i=0; i<num_outputs; i++) {
+    result[i] = meta->activation[number_of_hidden_layers][i];
+    }
 
   if (training == JCKY_TRAIN) {
         backpropagate(meta, activation_initial, target_values);
     }
   else {
-    for (i=0; i<batch_size; i++) {
-      nn_type max = 0.0;
-      int max_index = 0;
-
-      int target_value_index = 0;
-      nn_type max_target_value = 0.0;
-
-      for (j=0; j<number_of_outputs; j++) {
-        if (meta->activation[number_of_hidden_layers][(j*batch_size)+i] > max) {
-          max = meta->activation[number_of_hidden_layers][(j*batch_size)+i];
-          max_index = j;
-        }
-
-        if (target_values[(i*number_of_outputs)+j] > max_target_value) {
-          max_target_value = target_values[(i*number_of_outputs)+j];
-          target_value_index = j;
-        }
-      }
-
-    //   printf("max index:    %i\n", max_index);
-    //   printf("target index: %i\n---\n", target_value_index);
-      if (max_index == target_value_index) {
-        (*count)++;
-        correct[i] = max_index;
-      }
-      else correct[i] = max_index + number_of_outputs;
-    }
+        *score += get_score(batch_size, number_of_outputs, meta->activation[number_of_hidden_layers], target_values);
   }
 }
 

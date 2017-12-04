@@ -155,8 +155,8 @@ int main(int argc, char **argv) {
 
     jcky_waitall(&(mpi_manager.neural_net));
 
-	unsigned int local_count = 0;
-    unsigned int total_count;
+	double local_score = 0;
+    double total_score;
 	int epoch;
 	int i;
 	unsigned int *sequence = malloc( mpi_manager.training_samples.total_len * sizeof(unsigned int) );
@@ -182,10 +182,9 @@ int main(int argc, char **argv) {
 			nn_type result[neural_net.number_of_outputs * neural_net.batch_size];
 			nn_type batch[neural_net.number_of_inputs * neural_net.batch_size];
 			nn_type targets[neural_net.number_of_outputs * neural_net.batch_size];
-			char correct[neural_net.batch_size];
 
 			create_batch_with_sequence_file(batch, targets, &training_file, neural_net.batch_size, i, sequence);
-            feed_forward(&neural_net, result, batch, targets, JCKY_TRAIN, &local_count, correct);
+            feed_forward(&neural_net, result, batch, targets, JCKY_TRAIN, &local_score);
 		}
 		//training_t2 = omp_get_wtime();
 		//training_duration = (training_t2 - training_t1);
@@ -209,7 +208,7 @@ int main(int argc, char **argv) {
 			char correct[neural_net.batch_size];
 
 			create_batch_no_sequence_file(batch, targets, &testing_file, neural_net.batch_size, i, mpi_manager.rank, mpi_manager.testing_samples.base);
-            feed_forward(&neural_net, result, batch, targets, JCKY_TEST, &local_count, correct);
+            feed_forward(&neural_net, result, batch, targets, JCKY_TEST, &local_score);
             //if (mpi_manager.master) printf(" - %i correct\n", count);
 			// if (mpi_manager.master && i != 0 && i%TEST_PRINT_RESULTS_EVERY == 0) {
 			// 	print_result(i, label, result, correct);
@@ -224,14 +223,14 @@ int main(int argc, char **argv) {
 	// 	printf("      Training Duration: %f\n", training_duration);
 	// 	printf("      Syncing Duration:  %f\n", syncing_duration);
 	// 	printf("      Testing Duration:  %f\n", testing_duration);
-        MPI_Reduce(&local_count, &total_count, 1, MPI_UNSIGNED, MPI_SUM, JCKY_MASTER, MPI_COMM_WORLD);
-        if (mpi_manager.master) printf("          Total Count: %u\n", total_count);
+        MPI_Reduce(&local_score, &total_score, 1, MPI_DOUBLE, MPI_SUM, JCKY_MASTER, MPI_COMM_WORLD);
+        if (mpi_manager.master) printf("          Total Score: %f\n", total_score);
 	// 	epoch_times[epoch]    = epoch_duration;
 	// 	training_times[epoch] = training_duration;
 	// 	syncing_times[epoch]  = syncing_duration;
 	// 	testing_times[epoch]  = testing_duration;
 	// 	counts[epoch]         = count;
-		local_count = 0;
+		local_score = 0.0;
 	}
 
 	// printf("Count, Epoch Time (s), Training Time (s), Syncing Time (s), Testing Time (s)\n");

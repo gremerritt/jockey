@@ -115,8 +115,7 @@ void feed_forward(
     nn_type *activation_initial,
     nn_type *target_values,
     char training,
-    unsigned int *count,
-    char *correct
+    double *score
 );
 
 void backpropagate(

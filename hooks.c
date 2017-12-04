@@ -98,3 +98,66 @@ char write_file() {
 
     return ret;
 }
+
+
+// ---------------------------------------------------------------- //
+// Description:                                                     //
+//      This will be ran after each testing batch is pushed through //
+//      the neural network. This hook is meant to allow you to test //
+//      the results. The inputs are as follows:                     //
+//          unsigned short int - batch_size                         //
+//          int - number_of_outputs                                 //
+//          nn_type (float or double) - *outputs                    //
+//              This is a matrix stored in row-major order. For     //
+//              example, if there is a batch size of 2, and 3       //
+//              outputs, this would be a matrix which looks like:   //
+//                  [A1, B1]                                        //
+//                  [A2, B2]                                        //
+//                  [A3, B3]                                        //
+//              where A and B are the outputs of the first and      //
+//              second inputs, respectively. This is stored as:     //
+//                  [A1, B1, A2, B2, A3, B3]                        //
+//          nn_type (float or double) - *targets                    //
+//              This is a matrix stored in row-major order. For     //
+//              example, the matrix:                                //
+//                  [A1, A2, A3]                                    //
+//                  [B1, B2, B3]                                    //
+//              would represent the two target outputs A and B,     //
+//              and stored as:                                      //
+//                  [A1, A2, A3, B1, B2, B3]                        //
+//                                                                  //
+//      You should return a value which represents the 'score' for  //
+//      this testing batch.                                         //
+//                                                                  //
+//      Below is an example for the MNIST dataset. This simply      //
+//      returns the count of correctly identified digits. Note that //
+//      this value will be summed across all MPI processes.         //
+// ---------------------------------------------------------------- //
+double get_score(unsigned short int batch_size, int number_of_outputs, nn_type *outputs, nn_type *targets) {
+    double score = 0.0;
+    unsigned short int i;
+    int j;
+
+    for (i=0; i<batch_size; i++) {
+        nn_type max_output_value = 0.0, max_target_value = 0.0;
+        int max_output_index = 0, max_target_index = 0;
+
+        for (j=0; j<number_of_outputs; j++) {
+            if (outputs[(j*batch_size)+i] > max_output_value) {
+                max_output_value = outputs[(j*batch_size)+i];
+                max_output_index = j;
+            }
+
+            if (targets[(i*number_of_outputs)+j] > max_target_value) {
+                max_target_value = targets[(i*number_of_outputs)+j];
+                max_target_index = j;
+            }
+        }
+
+        if (max_output_index == max_target_index) {
+            score += 1.0;
+        }
+    }
+
+    return score;
+}
