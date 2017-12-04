@@ -1,5 +1,7 @@
-#include "file_helpers.h"
 #include <stdio.h>
+
+#include "file_helpers.h"
+
 
 void create_batch_with_sequence_file(
     nn_type *batch,

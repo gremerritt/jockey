@@ -1,12 +1,15 @@
 #ifndef MPIHELPER_H
 #define MPIHELPER_H
 
-#include <stdlib.h>
+
 #include <mpi.h>
+#include <stdlib.h>
+
 #include "neural_net.h"
 
 #define TRAINING_DATA 0
 #define TESTING_DATA 1
+
 
 typedef struct request_manager {
     unsigned short int number_of_requests;
@@ -66,5 +69,6 @@ void jcky_recv_nn_async_logical(struct meta_neural_net *meta, neural_net *nn, in
 void jcky_sync_sequence(unsigned int *sequence, mpi_manager *manager);
 void jcky_send_sequence(unsigned int *sequence, mpi_manager *manager);
 void jcky_recv_sequence(unsigned int *sequence, mpi_manager *manager);
+
 
 #endif

@@ -1,12 +1,20 @@
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
-#include "file_helpers.h"
+
 #include "constants.h"
+#include "file_helpers.h"
 #include "neural_net.h"
 
 
-char jcky_write_file(nn_type **data, nn_type **targets, const unsigned int records, const unsigned int data_len, const unsigned int targets_len, char *filename) {
+char jcky_write_file(
+    nn_type **data,
+    nn_type **targets,
+    const unsigned int records,
+    const unsigned int data_len,
+    const unsigned int targets_len,
+    char *filename)
+{
     FILE *file;
     char version[] = JCKY_VERSION;
     unsigned char type;

@@ -1,9 +1,10 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+
+#include "batch.h"
 #include "file_helpers.h"
 #include "neural_net.h"
-#include "batch.h"
 
 #define RECORDS 6
 #define DATA_LEN 3
@@ -11,6 +12,7 @@
 #define INCREMENT 0.1
 #define BATCH 3
 #define FILENAME "test_file.jockey"
+
 
 int main(int argc, char **argv) {
     printf("Running Tests\n    ");

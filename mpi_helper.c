@@ -1,19 +1,23 @@
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
-#include "helpers.h"
+
 #include "constants.h"
+#include "helpers.h"
 #include "mpi_helper.h"
+
 
 void (*JCKY_SEND_NN_ASYNC_FUNCS[2])(struct meta_neural_net *, neural_net *, int, mpi_manager *) = {
     jcky_send_nn_async_contiguous,
     jcky_send_nn_async_logical
 };
 
+
 void (*JCKY_RECV_NN_ASYNC_FUNCS[2])(struct meta_neural_net *, neural_net *, int, mpi_manager *) = {
     jcky_recv_nn_async_contiguous,
     jcky_recv_nn_async_logical
 };
+
 
 // TODO: this should handle errors
 mpi_manager mpi_init(int argc, char **argv) {
@@ -39,11 +43,13 @@ mpi_manager mpi_init(int argc, char **argv) {
     return manager;
 }
 
+
 void mpi_announce(mpi_manager *manager) {
     MPI_Barrier(MPI_COMM_WORLD);
     printf("Reporting from processor %s, rank %u of %u\n",
         manager->processor_name, manager->rank, manager->world_size);
 }
+
 
 // TODO:
 //   - Make sure types are correct for world size and rank
@@ -96,6 +102,7 @@ void update_mpi_manager(struct meta_neural_net *meta, mpi_manager *manager,
     manager->recv_nn_async_func = JCKY_RECV_NN_ASYNC_FUNCS[memory_layout];
 }
 
+
 request_manager create_request_manager(unsigned short int number_of_requests) {
     request_manager request_manager;
 
@@ -106,6 +113,7 @@ request_manager create_request_manager(unsigned short int number_of_requests) {
 
     return request_manager;
 }
+
 
 // Each process will have a multiple of the batch size.
 // If we have more processes than are useful just error out
@@ -161,20 +169,24 @@ sample_manager create_sample_manager(unsigned int samples, unsigned short int ba
     return sample_manager;
 }
 
+
 void destroy_mpi_manager(mpi_manager *manager) {
     destroy_request_manager(&(manager->neural_net));
     destroy_request_manager(&(manager->sequence));
 }
+
 
 void destroy_request_manager(request_manager *request_manager) {
     free(request_manager->request);
     free(request_manager->status);
 }
 
+
 void jcky_waitall(request_manager *request_manager) {
     MPI_Waitall(request_manager->number_of_requests, request_manager->request, request_manager->status);
     request_manager->request_num = 0;
 }
+
 
 // TODO:
 //  - handle errors
@@ -290,6 +302,7 @@ void jcky_send_nn_async_logical(struct meta_neural_net *meta, neural_net *nn, in
     //---------------------------------------------------------------------------
 }
 
+
 // TODO:
 //   - handle errors
 //   - variable types
@@ -333,6 +346,7 @@ void jcky_recv_nn_async_logical(struct meta_neural_net *meta, neural_net *nn, in
     //---------------------------------------------------------------------------
 }
 
+
 // TODO:
 //  - handle errors
 void jcky_sync_sequence(unsigned int *sequence, mpi_manager *manager) {
@@ -348,6 +362,7 @@ void jcky_sync_sequence(unsigned int *sequence, mpi_manager *manager) {
     jcky_waitall(&((*manager).sequence));
 }
 
+
 // TODO:
 //  - handle errors
 void jcky_send_sequence(unsigned int *sequence, mpi_manager *manager) {
@@ -362,6 +377,7 @@ void jcky_send_sequence(unsigned int *sequence, mpi_manager *manager) {
     }
     MPI_Isend(sequence + (base * sends), (*manager).training_samples.procn, MPI_UNSIGNED, sends, 1, MPI_COMM_WORLD, request + (*request_num)++);
 }
+
 
 // TODO:
 //  - handle errors

@@ -1,26 +1,28 @@
+#include <math.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
+
 
 int generate_random_int() {
-  // we're generating two random ints using the Rand() method, then putting
-  // the high bits of one of them into the low bits of the other. The reason
-  // for this is that the rand() function does a better job of generating
-  // statistically random digits in the higher bits.
-  int random_upper = rand();
-  int random_lower = rand();
+    // we're generating two random ints using the Rand() method, then putting
+    // the high bits of one of them into the low bits of the other. The reason
+    // for this is that the rand() function does a better job of generating
+    // statistically random digits in the higher bits.
+    int random_upper = rand();
+    int random_lower = rand();
 
-  // shift the upper half of the bits to the lower half
-  random_lower >>= (int)((sizeof(int) / 2) * 8);
+    // shift the upper half of the bits to the lower half
+    random_lower >>= (int)((sizeof(int) / 2) * 8);
 
-  // zero out the lower bits
-  random_upper &= 0xFFFF0000;
+    // zero out the lower bits
+    random_upper &= 0xFFFF0000;
 
-  // combine the two
-  random_upper |= random_lower;
+    // combine the two
+    random_upper |= random_lower;
 
-  return random_upper;
+    return random_upper;
 }
+
 
 int generate_guassian_distribution(double *numbers, int size, int seed) {
     if (seed == -1) {
@@ -51,15 +53,16 @@ int generate_guassian_distribution(double *numbers, int size, int seed) {
     return seed;
 }
 
+
 void shuffle(unsigned int *array, int size) {
-  // shuffling with Knuth-Fisher-Yates algorithm
-  int i;
-  for (i = size - 1; i > 0; i--) {
-    int n = generate_random_int() % (i+1);
-    if (i != n) {
-      int tmp = array[i];
-      array[i] = array[n];
-      array[n] = tmp;
+    // shuffling with Knuth-Fisher-Yates algorithm
+    int i;
+    for (i = size - 1; i > 0; i--) {
+        int n = generate_random_int() % (i+1);
+        if (i != n) {
+            int tmp = array[i];
+            array[i] = array[n];
+            array[n] = tmp;
+        }
     }
-  }
 }

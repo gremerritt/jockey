@@ -1,6 +1,7 @@
 #ifndef NEURALNET_H
 #define NEURALNET_H
 
+
 #include "math.h"
 
 typedef double nn_type;
@@ -8,7 +9,7 @@ typedef double nn_type;
 
 // This base object defines the neural_net and contains
 // all of the bias and weight information. It is managed
-// by the neural_net object.
+// by the meta_neural_net object.
 typedef struct neural_net {
     // The container holds all of the neural net data.
     // Each entry in the bias and weight arrays simply
@@ -123,5 +124,6 @@ void backpropagate(
     nn_type *activation_initial,
     nn_type *target_values
 );
+
 
 #endif

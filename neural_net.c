@@ -1,11 +1,13 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "constants.h"
+#include "hooks.h"
+#include "matrix_helpers.h"
 #include "mpi_helper.h"
 #include "neural_net.h"
-#include "matrix_helpers.h"
 #include "randomizing_helpers.h"
-#include "hooks.h"
+
 
 functions contiguous_functions = {
     .alloc = nn_alloc_contiguous,
@@ -22,6 +24,7 @@ functions logical_functions = {
     .get_change = nn_get_change_logical,
     .apply_changes = nn_apply_changes_logical
 };
+
 
 // This function sets the various 'hyperparameters' (i.e. learning rate,
 // number of layers, nodes per layer, etc.) It also initializes the
@@ -61,6 +64,7 @@ struct meta_neural_net create_neural_net(
 
     return nn;
 }
+
 
 // This allocates space in memory for the neural net
 void meta_nn_alloc(struct meta_neural_net *meta) {
@@ -331,7 +335,6 @@ void nn_copy_logical(struct meta_neural_net *meta, const unsigned char trgt, con
         copy_vectors(meta->nns[trgt].bias[i], meta->nns[src].bias[i], number_of_nodes_in_hidden_layers);
     }
     copy_vectors(meta->nns[trgt].bias[number_of_hidden_layers], meta->nns[src].bias[number_of_hidden_layers], number_of_outputs);
-
     copy_vectors(meta->nns[trgt].weight[0], meta->nns[src].weight[0], number_of_matrix_elements);
 
     number_of_matrix_elements = number_of_nodes_in_hidden_layers * number_of_nodes_in_hidden_layers;
@@ -361,7 +364,6 @@ void nn_get_change_logical(struct meta_neural_net *meta) {
         subtract_vectors(meta->nns[JCKY_NN_SCRATCH].bias[i], meta->nns[JCKY_NN_BASE].bias[i], number_of_nodes_in_hidden_layers);
     }
     subtract_vectors(meta->nns[JCKY_NN_SCRATCH].bias[number_of_hidden_layers], meta->nns[JCKY_NN_BASE].bias[number_of_hidden_layers], number_of_outputs);
-
     subtract_vectors(meta->nns[JCKY_NN_SCRATCH].weight[0], meta->nns[JCKY_NN_BASE].weight[0], number_of_matrix_elements);
 
     number_of_matrix_elements = number_of_nodes_in_hidden_layers * number_of_nodes_in_hidden_layers;
