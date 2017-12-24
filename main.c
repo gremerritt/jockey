@@ -209,7 +209,6 @@ int main(int argc, char **argv) {
     destroy_mpi_manager(&mpi_manager);
     destroy_meta_nn(&neural_net);
 
-mpi_finalize:
     MPI_Finalize();
     jcky_close_file(training_file);
     jcky_close_file(testing_file);
