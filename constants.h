@@ -1,6 +1,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+
+typedef double nn_type;
+
 #define JCKY_VERSION "0.0.0"
 
 #define JCKY_MASTER 0
@@ -28,5 +31,6 @@ enum type_identifiers{JCKY_FLOAT, JCKY_DOUBLE};
 #define DEFAULT_BATCH_SIZE 5
 #define DEFAULT_LEARNING_RATE 1.5
 #define DEFAULT_EPOCHS 100
+
 
 #endif

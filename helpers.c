@@ -21,34 +21,23 @@ void welcome(unsigned char master) {
 unsigned char process_command_line(
     int argc,
     char **argv,
-    int *number_of_hidden_layers,
-    int *number_of_nodes_in_hidden_layers,
-    int *batch_size,
-    nn_type *learning_rate,
-    unsigned short int *epochs,
-    int *seed,
-    unsigned char *memory_layout,
-    unsigned char *num_blocks,
-    unsigned int *block_size,
-    unsigned char *action,
-    char *training_filename,
-    char *testing_filename)
+    jcky_cli *cli)
 {
 	int i;
     unsigned char err = 0;
 
-    *number_of_hidden_layers = DEFAULT_NUM_HIDDEN_LAYERS;
-    *number_of_nodes_in_hidden_layers = DEFAULT_NUM_NODES_IN_HIDDEN_LAYERS;
-    *batch_size = DEFAULT_BATCH_SIZE;
-    *learning_rate = DEFAULT_LEARNING_RATE;
-    *seed = -1;  // Signal to generate a random seed
-    *memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
-    *epochs = DEFAULT_EPOCHS;
-    *num_blocks = 0;
-    *block_size = 0;
-    *action = JCKY_ACTION_RUN;
-    training_filename[0] = '\0';
-    testing_filename[0] = '\0';
+    cli->number_of_hidden_layers = DEFAULT_NUM_HIDDEN_LAYERS;
+    cli->number_of_nodes_in_hidden_layers = DEFAULT_NUM_NODES_IN_HIDDEN_LAYERS;
+    cli->batch_size = DEFAULT_BATCH_SIZE;
+    cli->learning_rate = DEFAULT_LEARNING_RATE;
+    cli->seed = -1;  // Signal to generate a random seed
+    cli->memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+    cli->epochs = DEFAULT_EPOCHS;
+    cli->num_blocks = 0;
+    cli->block_size = 0;
+    cli->action = JCKY_ACTION_RUN;
+    cli->training_filename[0] = '\0';
+    cli->testing_filename[0] = '\0';
 
 	for (i=1; i<argc; i++) {
 		char *str   = argv[i];
@@ -57,33 +46,33 @@ unsigned char process_command_line(
 
 		if ((strncmp(param, "--hidden-layers", 15) == 0) ||
 			(strncmp(param, "--hl", 4) == 0)) {
-			*number_of_hidden_layers = (int)strtol( strtok(val, " "), NULL, 10);
+			cli->number_of_hidden_layers = (int)strtol( strtok(val, " "), NULL, 10);
 		}
 		else if ((strncmp(param, "--hidden-nodes", 14) == 0) ||
 				 (strncmp(param, "--hn", 4) == 0)) {
-			*number_of_nodes_in_hidden_layers = (int)strtol( strtok(val, " "), NULL, 10);
+			cli->number_of_nodes_in_hidden_layers = (int)strtol( strtok(val, " "), NULL, 10);
 		}
 		else if ((strncmp(param, "--batch-size", 12) == 0) ||
 				 (strncmp(param, "--bs", 4) == 0)) {
-			*batch_size = (int)strtol( strtok(val, " "), NULL, 10);
+			cli->batch_size = (int)strtol( strtok(val, " "), NULL, 10);
 		}
 		else if ((strncmp(param, "--learning-rate", 15) == 0) ||
 				 (strncmp(param, "--lr", 4) == 0)) {
-			*learning_rate = (nn_type)strtod( strtok(val, " "), NULL);
+			cli->learning_rate = (nn_type)strtod( strtok(val, " "), NULL);
 		}
         else if ((strncmp(param, "--epochs", 8) == 0) ||
 				 (strncmp(param, "--e", 3) == 0)) {
-			*epochs = (unsigned short int)strtol( strtok(val, " "), NULL, 10);
+			cli->epochs = (unsigned short int)strtol( strtok(val, " "), NULL, 10);
 		}
         else if (strncmp(param, "--seed", 6) == 0) {
-			*seed = (int)strtol( strtok(val, " "), NULL, 10);
+			cli->seed = (int)strtol( strtok(val, " "), NULL, 10);
 		}
         else if (strncmp(param, "--memory-layout", 15) == 0) {
             if (strncmp(val, JCKY_CONTIGUOUS_LAYOUT, strlen(JCKY_CONTIGUOUS_LAYOUT)) == 0) {
-                *memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+                cli->memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
             }
             else if (strncmp(val, JCKY_LOGICAL_LAYOUT, strlen(JCKY_LOGICAL_LAYOUT)) == 0) {
-                *memory_layout = (unsigned char)JCKY_LOGICAL_LAYOUT_ID;
+                cli->memory_layout = (unsigned char)JCKY_LOGICAL_LAYOUT_ID;
             }
             else {
                 printf("Error: Unknown option '%s' for memory-layout.\n", val);
@@ -99,7 +88,7 @@ unsigned char process_command_line(
                 break;
             }
             else {
-                *num_blocks = (unsigned char)tmp_num_blocks;
+                cli->num_blocks = (unsigned char)tmp_num_blocks;
             }
         }
         else if (strncmp(param, "--block-size", 12) == 0) {
@@ -117,40 +106,40 @@ unsigned char process_command_line(
                 break;
             }
             else {
-                *block_size = (unsigned int)tmp_block_size;
+                cli->block_size = (unsigned int)tmp_block_size;
             }
         }
         else if (strncmp(param, "--write", 7) == 0) {
-            *action = JCKY_ACTION_WRITE;
+            cli->action = JCKY_ACTION_WRITE;
         }
         else if (strncmp(param, "--training-filename", 19) == 0 ||
                  strncmp(param, "--training-file", 15) == 0||
                  strncmp(param, "--train", 7) == 0) {
             if (val == NULL) continue;
             size_t training_filename_len = strlen(val);
-            strncpy(training_filename, val, 127);
-            training_filename[(training_filename_len > 126) ? 127 : training_filename_len] = '\0';
+            strncpy(cli->training_filename, val, 127);
+            cli->training_filename[(training_filename_len > 126) ? 127 : training_filename_len] = '\0';
         }
         else if (strncmp(param, "--testing-filename", 18) == 0 ||
                  strncmp(param, "--testing-file", 14) == 0 ||
                  strncmp(param, "--test", 6) == 0) {
             if (val == NULL) continue;
             size_t testing_filename_len = strlen(val);
-            strncpy(testing_filename, val, 127);
-            testing_filename[(testing_filename_len > 126) ? 127 : testing_filename_len] = '\0';
+            strncpy(cli->testing_filename, val, 127);
+            cli->testing_filename[(testing_filename_len > 126) ? 127 : testing_filename_len] = '\0';
         }
 	}
 
     if (!err) {
-        if ((*memory_layout == JCKY_LOGICAL_LAYOUT_ID) && (*num_blocks || *block_size)) {
+        if ((cli->memory_layout == JCKY_LOGICAL_LAYOUT_ID) && (cli->num_blocks || cli->block_size)) {
             printf("Warning: 'blocks' and 'block-size' parameters have no effect when using logical memory layout.\n");
         }
-        if ((*memory_layout == JCKY_CONTIGUOUS_LAYOUT_ID) && *num_blocks && *block_size) {
+        if ((cli->memory_layout == JCKY_CONTIGUOUS_LAYOUT_ID) && cli->num_blocks && cli->block_size) {
             printf("Error: 'blocks' and 'block-size' parameters are mutually exclusive.\n");
             err = 1;
         }
-        if (*action == JCKY_ACTION_RUN &&
-            (strlen(training_filename) == 0 || strlen(testing_filename) == 0)) {
+        if (cli->action == JCKY_ACTION_RUN &&
+            (strlen(cli->training_filename) == 0 || strlen(cli->testing_filename) == 0)) {
             printf("Error: Must provide a training file and a testing file.\n");
             err = 1;
         }

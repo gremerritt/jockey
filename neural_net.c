@@ -32,15 +32,9 @@ functions logical_functions = {
 // are initialized to a random Gaussian value between -1 and 1 in order
 // to give the neural net a place to start.
 struct meta_neural_net create_neural_net(
-    int number_of_hidden_layers,
-    int number_of_nodes_in_hidden_layers,
+    jcky_cli *cli,
     int number_of_inputs,
-    int number_of_outputs,
-    int batch_size,
-    nn_type eta,
-    unsigned char memory_layout,
-    unsigned char num_blocks,
-    unsigned int block_size)
+    int number_of_outputs)
 {
     struct meta_neural_net nn;
     struct functions *NN_FUNCTIONS[2] = {
@@ -48,17 +42,17 @@ struct meta_neural_net create_neural_net(
         &logical_functions
     };
 
-    nn.number_of_hidden_layers = number_of_hidden_layers;
-    nn.number_of_nodes_in_hidden_layers = number_of_nodes_in_hidden_layers;
+    nn.number_of_hidden_layers = cli->number_of_hidden_layers;
+    nn.number_of_nodes_in_hidden_layers = cli->number_of_nodes_in_hidden_layers;
     nn.number_of_inputs = number_of_inputs;
     nn.number_of_outputs = number_of_outputs;
-    nn.batch_size = batch_size;
-    nn.eta = eta;
+    nn.batch_size = cli->batch_size;
+    nn.eta = cli->learning_rate;
     nn.cms_len = 0;
-    nn.memory_layout = memory_layout;
-    nn.num_blocks = num_blocks;
-    nn.block_size = block_size;
-    nn.functions = NN_FUNCTIONS[memory_layout];
+    nn.memory_layout = cli->memory_layout;
+    nn.num_blocks = cli->num_blocks;
+    nn.block_size = cli->block_size;
+    nn.functions = NN_FUNCTIONS[cli->memory_layout];
 
     meta_nn_alloc(&nn);
 

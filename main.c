@@ -37,40 +37,27 @@ int main(int argc, char **argv) {
     // jcky_file training_file;
     // jcky_file testing_file;
 
-    int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
-    nn_type learning_rate;
-    unsigned char memory_layout, num_blocks, action;
-    unsigned int block_size;
-    unsigned short int epochs;
-    char training_filename[128], testing_filename[128];
+    // int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
+    // nn_type learning_rate;
+    // unsigned char memory_layout, num_blocks, action;
+    // unsigned int block_size;
+    // unsigned short int epochs;
+    // char training_filename[128], testing_filename[128];
     jcky_file training_file, testing_file;
 
-    unsigned char pcl = process_command_line(
-        argc,
-        argv,
-        &number_of_hidden_layers,
-        &number_of_nodes_in_hidden_layers,
-        &batch_size,
-        &learning_rate,
-        &epochs,
-        &seed,
-        &memory_layout,
-        &num_blocks,
-        &block_size,
-        &action,
-        training_filename,
-        testing_filename
-    );
-    printf("post cli\n");
-    if (pcl != 0) return -1;
-    else if (action == JCKY_ACTION_WRITE) {
+    jcky_cli cli;
+    unsigned char pcl = process_command_line(argc, argv, &cli);
+    if (pcl != 0) {
+        return -1;
+    }
+    else if (cli.action == JCKY_ACTION_WRITE) {
         return write_file();
     }
-    else if (action == JCKY_ACTION_RUN) {
-        training_file = jcky_open_file(training_filename);
+    else if (cli.action == JCKY_ACTION_RUN) {
+        training_file = jcky_open_file(cli.training_filename);
         if (training_file.stream == NULL) return -1;
 
-        testing_file = jcky_open_file(testing_filename);
+        testing_file = jcky_open_file(cli.testing_filename);
         if (testing_file.stream == NULL) {
             jcky_close_file(training_file);
             return -1;
@@ -96,19 +83,13 @@ int main(int argc, char **argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     struct meta_neural_net neural_net = create_neural_net(
-        number_of_hidden_layers,
-        number_of_nodes_in_hidden_layers,
+        &cli,
         jcky_get_num_inputs(training_file),
-        jcky_get_num_outputs(training_file),
-        batch_size,
-        learning_rate,
-        memory_layout,
-        num_blocks,
-        block_size
+        jcky_get_num_outputs(training_file)
     );
 
     if (mpi_manager.master) {
-        neural_net.functions->init(&neural_net, seed);
+        neural_net.functions->init(&neural_net, cli.seed);
         nn_alloc_cms(&neural_net, mpi_manager.child_procs);
     }
 
@@ -134,8 +115,8 @@ int main(int argc, char **argv) {
     	printf("\n  Nodes in Hidden Layers: %i", neural_net.number_of_nodes_in_hidden_layers);
     	printf("\n  Batch Size:             %i", neural_net.batch_size);
     	printf("\n  Learning Rate:          %f", neural_net.eta);
-        printf("\n  Epochs:                 %i", epochs);
         printf("\n  Initialization Seed:    %i", neural_net.seed);
+        printf("\n  Epochs:                 %i", cli.epochs);
     	printf("\n------------------\n");
     }
 
@@ -151,7 +132,7 @@ int main(int argc, char **argv) {
     const unsigned int training_batches = mpi_manager.training_samples.batches;
     const unsigned int testing_batches = mpi_manager.testing_samples.batches;
     const unsigned short int child_procs = mpi_manager.child_procs;
-	for (epoch=0; epoch<epochs; epoch++) {
+	for (epoch=0; epoch<cli.epochs; epoch++) {
 		if (mpi_manager.master) printf("  Epoch %i\n", epoch);
 		//epoch_t1 = omp_get_wtime();
         neural_net.functions->copy(&neural_net, JCKY_NN_SCRATCH, JCKY_NN_BASE);

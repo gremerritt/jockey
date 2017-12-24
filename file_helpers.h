@@ -1,11 +1,9 @@
 #ifndef FILEHELPERS_H
 #define FILEHELPERS_H
 
-
 #include <stdio.h>
 
-#include "mpi_helper.h"
-#include "neural_net.h"
+#include "constants.h"
 
 
 typedef struct jcky_file {

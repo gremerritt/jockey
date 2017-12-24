@@ -1,26 +1,25 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include "constants.h"
+#include "file_helpers.h"
 
-#include "neural_net.h"
 
+typedef struct jcky_cli {
+    int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
+    nn_type learning_rate;
+    unsigned char memory_layout, num_blocks, action;
+    unsigned int block_size;
+    unsigned short int epochs;
+    char training_filename[128], testing_filename[128];
+    jcky_file training_file, testing_file;
+} jcky_cli;
 
 void welcome(unsigned char master);
 unsigned char process_command_line(
     int argc,
     char **argv,
-    int *number_of_hidden_layers,
-    int *number_of_nodes_in_hidden_layers,
-    int *batch_size,
-    nn_type *learning_rate,
-    unsigned short int *epochs,
-    int *seed,
-    unsigned char *memory_layout,
-    unsigned char *num_blocks,
-    unsigned int *block_size,
-    unsigned char *action,
-    char *training_filename,
-    char *testing_filename);
+    jcky_cli *cli);
 unsigned int round_up_multiple(unsigned int number, unsigned int multiple);
 
 

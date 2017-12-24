@@ -4,7 +4,8 @@
 
 #include "math.h"
 
-typedef double nn_type;
+#include "constants.h"
+#include "helpers.h"
 
 
 // This base object defines the neural_net and contains
@@ -99,15 +100,9 @@ void nn_alloc_contiguous(struct meta_neural_net *meta, neural_net *nn);
 void nn_alloc_logical(struct meta_neural_net *meta, neural_net *nn);
 
 struct meta_neural_net create_neural_net(
-    int number_of_hidden_layers,
-    int number_of_nodes_in_hidden_layers,
+    jcky_cli *cli,
     int number_of_inputs,
-    int number_of_outputs,
-    int batch_size,
-    nn_type eta,
-    unsigned char memory_layout,
-    unsigned char num_blocks,
-    unsigned int block_size
+    int number_of_outputs
 );
 
 void feed_forward(
