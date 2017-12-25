@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -6,8 +7,8 @@
 #include "helpers.h"
 
 
-void welcome(unsigned char master) {
-    if (master) {
+void welcome(jcky_cli *cli, unsigned char master) {
+    if (cli->verbose && master) {
         printf("            .''       _            __\n");
         printf("  ._.-.___.' (`\\     (_)___  _____/ /_____  __  __\n");
         printf(" //(        ( `'    / / __ \\/ ___/ //_/ _ \\/ / / /\n");
@@ -26,18 +27,19 @@ unsigned char process_command_line(
 	int i;
     unsigned char err = 0;
 
+    cli->action = JCKY_ACTION_RUN;
+    cli->batch_size = DEFAULT_BATCH_SIZE;
+    cli->block_size = 0;
+    cli->epochs = DEFAULT_EPOCHS;
+    cli->learning_rate = DEFAULT_LEARNING_RATE;
+    cli->memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
+    cli->num_blocks = 0;
     cli->number_of_hidden_layers = DEFAULT_NUM_HIDDEN_LAYERS;
     cli->number_of_nodes_in_hidden_layers = DEFAULT_NUM_NODES_IN_HIDDEN_LAYERS;
-    cli->batch_size = DEFAULT_BATCH_SIZE;
-    cli->learning_rate = DEFAULT_LEARNING_RATE;
     cli->seed = -1;  // Signal to generate a random seed
-    cli->memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
-    cli->epochs = DEFAULT_EPOCHS;
-    cli->num_blocks = 0;
-    cli->block_size = 0;
-    cli->action = JCKY_ACTION_RUN;
-    cli->training_filename[0] = '\0';
     cli->testing_filename[0] = '\0';
+    cli->training_filename[0] = '\0';
+    cli->verbose = 0;
 
 	for (i=1; i<argc; i++) {
 		char *str   = argv[i];
@@ -128,6 +130,10 @@ unsigned char process_command_line(
             strncpy(cli->testing_filename, val, 127);
             cli->testing_filename[(testing_filename_len > 126) ? 127 : testing_filename_len] = '\0';
         }
+        else if (strncmp(param, "--verbose", 9) == 0 ||
+                 strncmp(param, "-v", 2) == 0) {
+            cli->verbose = 1;
+        }
 	}
 
     if (!err) {
@@ -146,6 +152,16 @@ unsigned char process_command_line(
     }
 
     return err;
+}
+
+
+void print_number(unsigned short int number, unsigned short int len) {
+    unsigned short int digits = (unsigned short int)(floor(log10(number)) + 1);
+    unsigned short int i;
+    unsigned short int buffer = len - digits;
+
+    for(i=0; i<buffer; i++) printf(" ");
+    printf("%i", number);
 }
 
 

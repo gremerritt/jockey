@@ -23,33 +23,30 @@
 
 
 int main(int argc, char **argv) {
-    // int number_of_hidden_layers = NUM_HIDDEN_LAYERS;
-    // int number_of_nodes_in_hidden_layers = NUM_NODES_IN_HIDDEN_LAYERS;
-    // int batch_size = BATCH_SIZE;
-    // nn_type learning_rate = LEARNING_RATE;
-    // int seed = -1;
-    // unsigned char memory_layout = (unsigned char)JCKY_CONTIGUOUS_LAYOUT_ID;
-    // unsigned char num_blocks = 0;
-    // unsigned int block_size = 0;
-    // unsigned char action = JCKY_ACTION_RUN;
-    // char training_filename[128] = "\0";
-    // char testing_filename[128] = "\0";
-    // jcky_file training_file;
-    // jcky_file testing_file;
+    double local_score = 0;
+    double total_score;
+	unsigned short int epoch;
+    unsigned short int percent_done, last_percent_done = 0;
+	int i;
+	unsigned int *sequence;
 
-    // int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
-    // nn_type learning_rate;
-    // unsigned char memory_layout, num_blocks, action;
-    // unsigned int block_size;
-    // unsigned short int epochs;
-    // char training_filename[128], testing_filename[128];
-    jcky_file training_file, testing_file;
-
+    double epoch_t1, epoch_t2, epoch_duration;
+	double training_t1, training_t2, training_duration;
+	double syncing_t1, syncing_t2, syncing_duration;
+	double testing_t1, testing_t2, testing_duration;
+	// int counts[EPOCHS];
+	// double epoch_times[EPOCHS];
+	// double training_times[EPOCHS];
+	// double syncing_times[EPOCHS];
+	// double testing_times[EPOCHS];
     jcky_cli cli;
-    unsigned char pcl = process_command_line(argc, argv, &cli);
-    if (pcl != 0) {
-        return -1;
-    }
+    jcky_file training_file, testing_file;
+    struct meta_neural_net neural_net;
+    mpi_manager mpi_manager;
+    unsigned char err;
+
+    err = process_command_line(argc, argv, &cli);
+    if (err != 0) return -1;
     else if (cli.action == JCKY_ACTION_WRITE) {
         return write_file();
     }
@@ -64,25 +61,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    mpi_manager mpi_manager = mpi_init(argc, argv);
-    welcome(mpi_manager.master);
-    mpi_announce(&mpi_manager);
-    const unsigned short int world_size = mpi_manager.world_size;
+    mpi_manager = mpi_init(argc, argv);
 
-	double epoch_t1, epoch_t2, epoch_duration;
-	double training_t1, training_t2, training_duration;
-	double syncing_t1, syncing_t2, syncing_duration;
-	double testing_t1, testing_t2, testing_duration;
-	// int counts[EPOCHS];
-	// double epoch_times[EPOCHS];
-	// double training_times[EPOCHS];
-	// double syncing_times[EPOCHS];
-	// double testing_times[EPOCHS];
-    unsigned short int k;
-
+    welcome(&cli, mpi_manager.master);
+    mpi_announce(&cli, &mpi_manager);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    struct meta_neural_net neural_net = create_neural_net(
+    neural_net = create_neural_net(
         &cli,
         jcky_get_num_inputs(training_file),
         jcky_get_num_outputs(training_file)
@@ -95,8 +80,7 @@ int main(int argc, char **argv) {
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    char err;
-    update_mpi_manager(&neural_net, &mpi_manager, TRAINING_SAMPLES, TEST_SAMPLES, &err);
+    update_mpi_manager(&neural_net, &mpi_manager, TRAINING_SAMPLES, TEST_SAMPLES, &cli, &err);
     if (err) {
         MPI_Finalize();
         return 0;
@@ -108,32 +92,28 @@ int main(int argc, char **argv) {
     jcky_sync_neural_net(&neural_net, &mpi_manager, 0);
 
     if (mpi_manager.master) {
-    	printf("\n  Total Layers:           %i", neural_net.number_of_hidden_layers+2);
-    	printf("\n  Hidden Layers:          %i", neural_net.number_of_hidden_layers);
-    	printf("\n  Inputs:                 %i", neural_net.number_of_inputs);
-    	printf("\n  Outputs:                %i", neural_net.number_of_outputs);
-    	printf("\n  Nodes in Hidden Layers: %i", neural_net.number_of_nodes_in_hidden_layers);
-    	printf("\n  Batch Size:             %i", neural_net.batch_size);
-    	printf("\n  Learning Rate:          %f", neural_net.eta);
-        printf("\n  Initialization Seed:    %i", neural_net.seed);
-        printf("\n  Epochs:                 %i", cli.epochs);
-    	printf("\n------------------\n");
+        printf("\n--------------------------------------\n");
+        printf("Configuration:\n");
+    	printf("    Total Layers:           %i\n", neural_net.number_of_hidden_layers+2);
+    	printf("    Hidden Layers:          %i\n", neural_net.number_of_hidden_layers);
+    	printf("    Inputs:                 %i\n", neural_net.number_of_inputs);
+    	printf("    Outputs:                %i\n", neural_net.number_of_outputs);
+    	printf("    Nodes in Hidden Layers: %i\n", neural_net.number_of_nodes_in_hidden_layers);
+    	printf("    Batch Size:             %i\n", neural_net.batch_size);
+    	printf("    Learning Rate:          %f\n", neural_net.eta);
+        printf("    Initialization Seed:    %i\n", neural_net.seed);
+        printf("    Epochs:                 %i\n", cli.epochs);
+    	printf("--------------------------------------\n\n");
     }
 
     jcky_waitall(&(mpi_manager.neural_net));
 
-	double local_score = 0;
-    double total_score;
-	int epoch;
-	int i;
-	unsigned int *sequence = malloc( mpi_manager.training_samples.total_len * sizeof(unsigned int) );
-
-	if (mpi_manager.master) printf("Training...\n");
+	sequence = malloc( mpi_manager.training_samples.total_len * sizeof(unsigned int) );
     const unsigned int training_batches = mpi_manager.training_samples.batches;
     const unsigned int testing_batches = mpi_manager.testing_samples.batches;
     const unsigned short int child_procs = mpi_manager.child_procs;
 	for (epoch=0; epoch<cli.epochs; epoch++) {
-		if (mpi_manager.master) printf("  Epoch %i\n", epoch);
+		if (mpi_manager.master) printf("Epoch %i\n", epoch);
 		//epoch_t1 = omp_get_wtime();
         neural_net.functions->copy(&neural_net, JCKY_NN_SCRATCH, JCKY_NN_BASE);
 
@@ -144,6 +124,7 @@ int main(int argc, char **argv) {
 
         jcky_sync_sequence(sequence, &mpi_manager);
 
+        if (mpi_manager.master) printf("    Training");
 		//training_t1 = omp_get_wtime();
 		for (i=0; i<training_batches; i++) {
 			nn_type result[neural_net.number_of_outputs * neural_net.batch_size];
@@ -152,7 +133,19 @@ int main(int argc, char **argv) {
 
 			create_batch_with_sequence_file(batch, targets, &training_file, neural_net.batch_size, i, sequence);
             feed_forward(&neural_net, result, batch, targets, JCKY_TRAIN, &local_score);
+            if (cli.verbose && mpi_manager.master) {
+                percent_done = (unsigned short int)((((i+1)*1.0) / training_batches) * 100);
+                if (percent_done > last_percent_done) {
+                    printf("\r    Training - ");
+                    print_number(percent_done, 3);
+                    printf("%%");
+                }
+            }
 		}
+        if (mpi_manager.master) {
+            printf("\n");
+            last_percent_done = 0;
+        }
 		//training_t2 = omp_get_wtime();
 		//training_duration = (training_t2 - training_t1);
 
@@ -168,6 +161,7 @@ int main(int argc, char **argv) {
 		// //syncing_t2 = omp_get_wtime();
 		// //syncing_duration = (syncing_t2 - syncing_t1);
 		// //testing_t1 = omp_get_wtime();
+        if (mpi_manager.master) printf("    Testing");
 		for (i=0; i<testing_batches; i++) {
 			nn_type result[neural_net.number_of_outputs * neural_net.batch_size];
 			nn_type batch[neural_net.number_of_inputs * neural_net.batch_size];
@@ -176,7 +170,19 @@ int main(int argc, char **argv) {
 
 			create_batch_no_sequence_file(batch, targets, &testing_file, neural_net.batch_size, i, mpi_manager.rank, mpi_manager.testing_samples.base);
             feed_forward(&neural_net, result, batch, targets, JCKY_TEST, &local_score);
+            if (cli.verbose && mpi_manager.master) {
+                percent_done = (unsigned short int)((((i+1)*1.0) / testing_batches) * 100);
+                if (percent_done > last_percent_done) {
+                    printf("\r    Testing  - ");
+                    print_number(percent_done, 3);
+                    printf("%%");
+                }
+            }
 		}
+        if (mpi_manager.master) {
+            printf("\n");
+            last_percent_done = 0;
+        }
 		//testing_t2 = omp_get_wtime();
 		//testing_duration = (testing_t2 - testing_t1);
 
@@ -187,7 +193,7 @@ int main(int argc, char **argv) {
 	// 	printf("      Syncing Duration:  %f\n", syncing_duration);
 	// 	printf("      Testing Duration:  %f\n", testing_duration);
         MPI_Reduce(&local_score, &total_score, 1, MPI_DOUBLE, MPI_SUM, JCKY_MASTER, MPI_COMM_WORLD);
-        if (mpi_manager.master) printf("          Total Score: %f\n", total_score);
+        if (mpi_manager.master) printf("    Total Score: %f\n", total_score);
 	// 	epoch_times[epoch]    = epoch_duration;
 	// 	training_times[epoch] = training_duration;
 	// 	syncing_times[epoch]  = syncing_duration;
@@ -208,9 +214,8 @@ int main(int argc, char **argv) {
 
     destroy_mpi_manager(&mpi_manager);
     destroy_meta_nn(&neural_net);
-
-    MPI_Finalize();
     jcky_close_file(training_file);
     jcky_close_file(testing_file);
+    MPI_Finalize();
 	return 0;
 }

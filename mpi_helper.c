@@ -44,10 +44,12 @@ mpi_manager mpi_init(int argc, char **argv) {
 }
 
 
-void mpi_announce(mpi_manager *manager) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("Reporting from processor %s, rank %u of %u\n",
-        manager->processor_name, manager->rank, manager->world_size);
+void mpi_announce(jcky_cli *cli, mpi_manager *manager) {
+    if (cli->verbose) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        printf("Reporting from processor %s, rank %u of %u\n",
+            manager->processor_name, manager->rank, manager->world_size);
+    }
 }
 
 
@@ -56,7 +58,8 @@ void mpi_announce(mpi_manager *manager) {
 //   - Use destructor for this
 //   - Use a data manager
 void update_mpi_manager(struct meta_neural_net *meta, mpi_manager *manager,
-                        unsigned int training_samples, unsigned int testing_samples, char *err) {
+                        unsigned int training_samples, unsigned int testing_samples,
+                        jcky_cli *cli, unsigned char *err) {
     *err = 0;
     const unsigned char memory_layout = meta->memory_layout;
     const unsigned short int child_procs_or_one = (manager->rank == 0) ? manager->child_procs : 1;
@@ -93,10 +96,12 @@ void update_mpi_manager(struct meta_neural_net *meta, mpi_manager *manager,
 
     manager->neural_net = create_request_manager(nn_number_of_requests);
     manager->sequence = create_request_manager(child_procs_or_one);
+
+    if (cli->verbose && manager->master) printf("\nCreating sample managers:\n");
     manager->training_samples = create_sample_manager(
-        training_samples, meta->batch_size, manager, TRAINING_DATA, err);
+        training_samples, meta->batch_size, manager, TRAINING_DATA, cli, err);
     manager->testing_samples = create_sample_manager(
-        testing_samples, meta->batch_size, manager, TESTING_DATA, err);
+        testing_samples, meta->batch_size, manager, TESTING_DATA, cli, err);
 
     manager->send_nn_async_func = JCKY_SEND_NN_ASYNC_FUNCS[memory_layout];
     manager->recv_nn_async_func = JCKY_RECV_NN_ASYNC_FUNCS[memory_layout];
@@ -119,28 +124,28 @@ request_manager create_request_manager(unsigned short int number_of_requests) {
 // If we have more processes than are useful just error out
 // because it's a bad configuration.
 sample_manager create_sample_manager(unsigned int samples, unsigned short int batch_size,
-                                     mpi_manager *manager, char type_code, char *err) {
+                                     mpi_manager *manager, char type_code,
+                                     jcky_cli *cli, unsigned char *err) {
     sample_manager sample_manager;
     char type[9];
-    unsigned short int world_size = (*manager).world_size;
-    unsigned short int rank = (*manager).rank;
+    unsigned short int world_size = manager->world_size;
 
     if (type_code == TRAINING_DATA) strcpy(type, "training");
     else if (type_code == TESTING_DATA) strcpy(type, "testing");
     else {
         *err = 1;
-        if (rank == 0) printf("Error: Invalid sample type.\n");
+        if (manager->master) printf("    Error: Invalid sample type.\n");
     }
 
     if (!(*err)) {
         if (world_size > round_up_multiple(samples, batch_size) / batch_size) {
             *err = 1;
-            if (rank == 0) printf("Error: Too many processes, too few %s samples, or too large of a batch size.\n", type);
+            if (manager->master) printf("    Error: Too many processes, too few %s samples, or too large of a batch size.\n", type);
         }
         else {
             sample_manager.base = round_up_multiple(samples / world_size, batch_size);
             sample_manager.procn = samples - ((world_size - 1) * sample_manager.base);
-            sample_manager.local = (rank < world_size - 1) ? sample_manager.base : sample_manager.procn;
+            sample_manager.local = (manager->rank < world_size - 1) ? sample_manager.base : sample_manager.procn;
 
             // Process 0 -> N-2 will have the same number of batches.
             // Process N-1 may have a slightly different number of batchs.
@@ -152,16 +157,19 @@ sample_manager create_sample_manager(unsigned int samples, unsigned short int ba
             // but it screws up the neural net to have a differently sized batch.
             // So just throw out a couple samples to make it work nicely.
             sample_manager.procn = (sample_manager.procn / batch_size) * batch_size;
-            sample_manager.local = (rank < world_size - 1) ? sample_manager.base : sample_manager.procn;
-            sample_manager.total_len = (rank == 0) ? (((world_size - 1) * sample_manager.base) + sample_manager.procn) : sample_manager.local;
+            sample_manager.local = (manager->rank < world_size - 1) ? sample_manager.base : sample_manager.procn;
+            sample_manager.total_len = manager->master ? ((world_size - 1) * sample_manager.base) + sample_manager.procn : sample_manager.local;
 
-            if (rank == 0) printf("Handling %u total %s samples.\n", sample_manager.total_len, type);
-            printf("Process %u will handle %u %s samples (%u batches)\n",
-                rank, sample_manager.local, type, sample_manager.batches);
-            if (sample_manager.extra > 0) {
-                printf("WARNING: Ignoring last %u %s samples. To avoid this, make sure your %s "
-                       "sample size is evenly divisible by your batch size.\n",
-                        sample_manager.extra, type, type);
+            if (cli->verbose) {
+                if (manager->master) printf("    Handling %u total %s samples.\n", sample_manager.total_len, type);
+
+                printf("    Process %u will handle %u %s samples (%u batches)\n",
+                    manager->rank, sample_manager.local, type, sample_manager.batches);
+                if (sample_manager.extra > 0) {
+                    printf("    WARNING: Ignoring last %u %s samples. To avoid this, make sure your %s "
+                           "sample size is evenly divisible by your batch size.\n",
+                            sample_manager.extra, type, type);
+                }
             }
         }
     }

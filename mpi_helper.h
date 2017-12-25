@@ -47,12 +47,14 @@ typedef struct mpi_manager {
 } mpi_manager;
 
 mpi_manager mpi_init(int argc, char **argv);
-void mpi_announce(mpi_manager *manager);
+void mpi_announce(jcky_cli *cli, mpi_manager *manager);
 void update_mpi_manager(struct meta_neural_net *nn, mpi_manager *manager,
-                        unsigned int training_samples, unsigned int testing_samples, char *err);
+                        unsigned int training_samples, unsigned int testing_samples,
+                        jcky_cli *cli, unsigned char *err);
 request_manager create_request_manager(unsigned short int number_of_requests);
 sample_manager create_sample_manager(unsigned int samples, unsigned short int batch_size,
-                                     mpi_manager *manager, char type_code, char *err);
+                                     mpi_manager *manager, char type_code,
+                                     jcky_cli *cli, unsigned char *err);
 
 void destroy_mpi_manager(mpi_manager *manager);
 void destroy_request_manager(request_manager *request_manager);
