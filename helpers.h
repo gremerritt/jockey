@@ -19,7 +19,8 @@ void welcome(jcky_cli *cli, unsigned char master);
 unsigned char process_command_line(
     int argc,
     char **argv,
-    jcky_cli *cli);
+    jcky_cli *cli,
+    unsigned char master);
 void print_number(unsigned short int number, unsigned short int len);
 unsigned int round_up_multiple(unsigned int number, unsigned int multiple);
 
