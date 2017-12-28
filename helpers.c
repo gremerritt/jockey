@@ -27,7 +27,7 @@ help_text() {
     printf("\n");
     printf("This program will write out two files during it's execution:\n");
     printf("  config.jockey - The layout, weights, and biases of the neural network.\n");
-    printf("  timing.jockey - Detailed timing report of the program. This includes\n");
+    printf("  %s - Detailed timing report of the program. This includes\n", JCKY_TIMING_FILENAME);
     printf("      the following metrics (all in milliseconds):\n");
     printf("          epoch_time:      Total time of the epoch.\n");
     printf("          copy:            Time to make a copy of the neural network used\n");
@@ -63,7 +63,7 @@ help_text() {
     // printf("        Default: Save the neural network after each epoch. This will\n");
     // printf("                 create a file 'neural_net.jockey' which \n");
     printf("    --no-timing\n");
-    printf("        Flag to ONLY save the timing report directly before the prorgam.\n");
+    printf("        Flag to ONLY save the timing report directly before the prorgam\n");
     printf("        terminates.\n");
     printf("        NOTE: Compile jockey without '#define JCKY_TIMING' to completly\n");
     printf("              disable timing.\n");
