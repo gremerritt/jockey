@@ -153,6 +153,7 @@ jcky_file jcky_open_file(char *filename) {
     }
 
     file.stream = stream;
+    file.records = records;
     file.datum_size = bytes_per_record;
     file.bytes_per_data = bytes_per_record * data_len;
     file.bytes_per_record = bytes_per_record * (data_len + targets_len);

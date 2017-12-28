@@ -7,3 +7,4 @@ main
 *.jockey
 jockey
 test
+*.csv

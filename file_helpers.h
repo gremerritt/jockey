@@ -11,7 +11,7 @@ typedef struct jcky_file {
     unsigned char offset;
     unsigned char datum_size;
     unsigned int bytes_per_record, bytes_per_data;
-    unsigned int data_len, targets_len;
+    unsigned int records, data_len, targets_len;
 } jcky_file;
 
 char jcky_write_file(

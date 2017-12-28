@@ -1,7 +1,9 @@
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "constants.h"
 #include "helpers.h"
@@ -23,16 +25,51 @@ help_text() {
     printf("Jockey is a small, fast, and scalable neural network which\n");
     printf("runs across an MPI cluster. Version %s.\n", JCKY_VERSION);
     printf("\n");
+    printf("This program will write out two files during it's execution:\n");
+    printf("  config.jockey - The layout, weights, and biases of the neural network.\n");
+    printf("  timing.jockey - Detailed timing report of the program. This includes\n");
+    printf("      the following metrics (all in milliseconds):\n");
+    printf("          epoch_time:      Total time of the epoch.\n");
+    printf("          copy:            Time to make a copy of the neural network used\n");
+    printf("                           for processing.\n");
+    printf("          shuffle:         Time to shuffle data and sync this information\n");
+    printf("                           across the MPI network.\n");
+    printf("          training:        Total training time.\n");
+    printf("          training_batch:  Average time to create a training batch.\n");
+    printf("          training_run:    Average time to push a training batch through the\n");
+    printf("                           neural network. This includes both feed forward\n");
+    printf("                           and backpropogation time.\n");
+    printf("          sync:            Time to syncronize the neural networks from the\n");
+    printf("                           various MPI processes.\n");
+    printf("          testing:         Total training time.\n");
+    printf("          testing_batch:   Average time to create a testing batch.\n");
+    printf("          testing_run:     Average time to push a testing batch through the\n");
+    printf("                           neural network. This includes both feed forward\n");
+    printf("                           time (no backpropogation).\n");
+    printf("\n");
     printf("Usage:\n");
     printf("    jockey --help/-h\n");
     printf("    jockey --version\n");
     printf("    jockey [options]\n");
     printf("\n");
-    printf("Options:\n");
+    printf("Flags:\n");
     printf("    -v\n");
     printf("        Flag to run with verbose output.\n");
     printf("    --write/-w\n");
     printf("        Flag to call to the 'hooks.write_file' function'.\n");
+    // printf("    --no-save\n");
+    // printf("        Flag to ONLY save the neural network directly before the program\n");
+    // printf("        terminates.\n");
+    // printf("        Default: Save the neural network after each epoch. This will\n");
+    // printf("                 create a file 'neural_net.jockey' which \n");
+    printf("    --no-timing\n");
+    printf("        Flag to ONLY save the timing report directly before the prorgam.\n");
+    printf("        terminates.\n");
+    printf("        NOTE: Compile jockey without '#define JCKY_TIMING' to completly\n");
+    printf("              disable timing.\n");
+    printf("        Default: Save the timing of the program after each epoch.\n");
+    printf("\n");
+    printf("Options:\n");
     printf("    --training-filename/--training-file/--train (str)\n");
     printf("        Path to training file. Required (unless running with the --write flag).\n");
     printf("    --testing-filename/--testing-file/--test (str)\n");
@@ -97,6 +134,7 @@ unsigned char process_command_line(
     cli->testing_filename[0] = '\0';
     cli->training_filename[0] = '\0';
     cli->verbose = 0;
+    cli->no_timing = 0;
 
 	for (i=1; i<argc; i++) {
 		char *option = argv[i];
@@ -105,10 +143,16 @@ unsigned char process_command_line(
         if (strncmp(option, "--write", 7) == 0 ||
             strncmp(option, "-w", 2) == 0) {
             cli->action = JCKY_ACTION_WRITE;
+            continue;
         }
         else if (strncmp(option, "--verbose", 9) == 0 ||
                  strncmp(option, "-v", 2) == 0) {
             cli->verbose = 1;
+            continue;
+        }
+        else if (strncmp(option, "--no-timing", 11) == 0) {
+            cli->no_timing = 1;
+            continue;
         }
         else if (strncmp(option, "--help", 6) == 0 ||
                  strncmp(option, "-h", 2) == 0) {
@@ -258,4 +302,20 @@ unsigned int round_up_multiple(unsigned int number, unsigned int multiple) {
         return number;
 
     return number + multiple - remainder;
+}
+
+
+struct timespec diff_time(struct timespec start, struct timespec end) {
+    struct timespec temp;
+
+    if ((end.tv_nsec-start.tv_nsec) < 0) {
+        temp.tv_sec = end.tv_sec - start.tv_sec-1;
+        temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+    }
+    else {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+
+    return temp;
 }

@@ -32,5 +32,8 @@ enum type_identifiers{JCKY_FLOAT, JCKY_DOUBLE};
 #define DEFAULT_LEARNING_RATE 1.5
 #define DEFAULT_EPOCHS 100
 
+#define JCKY_TIMING
+#define JCKY_TIMING_FILENAME "timing.jockey.csv"
+
 
 #endif
