@@ -33,7 +33,7 @@ The goal of this project is to create a _fast_ neural network that can solve big
   ```
   $ jockey --train training.jockey --test testing.jockey -v
   ```
-  - Otherwise, run using `mpirun` (Jockey ran been tested using Open MPI)
+  - Otherwise, run using `mpirun` (Jockey has been tested using Open MPI)
   ```
   $ mpirun -np 4 jockey --train training.jockey --test testing.jockey -v
   ```
