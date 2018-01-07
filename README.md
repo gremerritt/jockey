@@ -41,8 +41,8 @@ The goal of this project is to create a _fast_ neural network that can solve big
   - Example output is:
   ```
   $ mpirun -np 4 jockey --train training.jockey --test testing.jockey -e 3 --no-timing -v
-                .''       _            __
-   ._.-.___.' (`\     (_)___  _____/ /_____  __  __
+              .''       _            __
+    ._.-.___.' (`\     (_)___  _____/ /_____  __  __
    //(        ( `'    / / __ \/ ___/ //_/ _ \/ / / /
 '/ )\ ).__. )      / / /_/ / /__/ ,< /  __/ /_/ /
 ' <' `/ ._/'/   __/ /\____/\___/_/|_|\___/\__, /
