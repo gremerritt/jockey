@@ -213,7 +213,7 @@ unsigned char process_command_line(
                 cli->memory_layout = (unsigned char)JCKY_LOGICAL_LAYOUT_ID;
             }
             else {
-                printf("Error: Unknown option '%s' for memory-layout.\n", val);
+                printf(KRED "Error: Unknown option '%s' for memory-layout.\n" KNRM, val);
                 err = 1;
                 break;
             }
@@ -222,7 +222,7 @@ unsigned char process_command_line(
             unsigned long tmp_num_blocks = strtoul( strtok(val, " "), NULL, 10);
             if ((tmp_num_blocks < 1) || (tmp_num_blocks > UCHAR_MAX)) {
                 if (master) {
-                    printf("Error: Invalid value %lu for 'blocks'. Must be between 1 and %u.\n",
+                    printf(KRED "Error: Invalid value %lu for 'blocks'. Must be between 1 and %u.\n" KNRM,
                             tmp_num_blocks, UCHAR_MAX);
                 }
                 err = 1;
@@ -236,7 +236,7 @@ unsigned char process_command_line(
             unsigned long tmp_block_size = strtoul( strtok(val, " "), NULL, 10);
             if (tmp_block_size % sizeof(nn_type) != 0) {
                 if (master) {
-                    printf("Error: Invalid value %lu for 'blocks'. Must be divisible by %lu.\n",
+                    printf(KRED "Error: Invalid value %lu for 'blocks'. Must be divisible by %lu.\n" KNRM,
                             tmp_block_size, sizeof(nn_type));
                 }
                 err = 1;
@@ -244,7 +244,7 @@ unsigned char process_command_line(
             }
             else if ((tmp_block_size < 1) || ((tmp_block_size / sizeof(nn_type) > INT_MAX))) {
                 if (master) {
-                    printf("Error: Invalid value %lu for 'blocks'. Must be between 1 and %lu.\n",
+                    printf(KRED "Error: Invalid value %lu for 'blocks'. Must be between 1 and %lu.\n" KNRM,
                             tmp_block_size, INT_MAX * sizeof(nn_type));
                 }
                 err = 1;
@@ -290,17 +290,17 @@ unsigned char process_command_line(
 
     if (!err) {
         if (master && (cli->memory_layout == JCKY_LOGICAL_LAYOUT_ID) && (cli->num_blocks || cli->block_size)) {
-            printf("Warning: 'blocks' and 'block-size' parameters have no effect when using logical memory layout.\n");
+            printf(KYEL "Warning: 'blocks' and 'block-size' parameters have no effect when using logical memory layout.\n" KNRM);
         }
         if ((cli->memory_layout == JCKY_CONTIGUOUS_LAYOUT_ID) && cli->num_blocks && cli->block_size) {
             if (master) {
-                printf("Error: 'blocks' and 'block-size' parameters are mutually exclusive.\n");
+                printf(KRED "Error: 'blocks' and 'block-size' parameters are mutually exclusive.\n" KNRM);
             }
             err = 1;
         }
         if (cli->action == JCKY_ACTION_RUN && (strlen(cli->training_filename) == 0 || strlen(cli->testing_filename) == 0)) {
             if (master) {
-                printf("Error: Must provide a training file and a testing file.\n");
+                printf(KRED "Error: Must provide a training file and a testing file.\n" KNRM);
             }
             err = 1;
         }
