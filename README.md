@@ -42,11 +42,12 @@ The goal of this project is to create a _fast_ neural network that can solve big
   ```
   $ mpirun -np 4 jockey --train training.jockey --test testing.jockey -e 3 --no-timing -v
                 .''       _            __
-      ._.-.___.' (`\     (_)___  _____/ /_____  __  __
-     //(        ( `'    / / __ \/ ___/ //_/ _ \/ / / /
+   ._.-.___.' (`\     (_)___  _____/ /_____  __  __
+   //(        ( `'    / / __ \/ ___/ //_/ _ \/ / / /
 '/ )\ ).__. )      / / /_/ / /__/ ,< /  __/ /_/ /
 ' <' `/ ._/'/   __/ /\____/\___/_/|_|\___/\__, /
-       ` /     /   /___/                     /____/ v0.0.0
+     ` /     /   /___/                     /____/ v0.0.0
+  ```
 
   Reporting from processor Gregs-MacBook-Pro.local, rank 0 of 4
   Reporting from processor Gregs-MacBook-Pro.local, rank 2 of 4
@@ -54,44 +55,46 @@ The goal of this project is to create a _fast_ neural network that can solve big
   Reporting from processor Gregs-MacBook-Pro.local, rank 1 of 4
 
   Creating sample managers:
-        Handling 60000 total training samples.
-        Process 0 will handle 15000 training samples (3000 batches)
-        Handling 10000 total testing samples.
-        Process 0 will handle 2500 testing samples (500 batches)
-        Process 1 will handle 15000 training samples (3000 batches)
-        Process 1 will handle 2500 testing samples (500 batches)
-        Process 2 will handle 15000 training samples (3000 batches)
-        Process 2 will handle 2500 testing samples (500 batches)
-        Process 3 will handle 15000 training samples (3000 batches)
-        Process 3 will handle 2500 testing samples (500 batches)
+      Handling 60000 total training samples.
+      Process 0 will handle 15000 training samples (3000 batches)
+      Handling 10000 total testing samples.
+      Process 0 will handle 2500 testing samples (500 batches)
+      Process 1 will handle 15000 training samples (3000 batches)
+      Process 1 will handle 2500 testing samples (500 batches)
+      Process 2 will handle 15000 training samples (3000 batches)
+      Process 2 will handle 2500 testing samples (500 batches)
+      Process 3 will handle 15000 training samples (3000 batches)
+      Process 3 will handle 2500 testing samples (500 batches)
 
   --------------------------------------
   Configuration:
-        Total Layers:           4
-        Hidden Layers:          2
-        Inputs:                 784
-        Outputs:                10
-        Nodes in Hidden Layers: 60
-        Batch Size:             5
-        Learning Rate:          1.500000
-        Initialization Seed:    1515351426
-        Initialization File:    N/A
-        Epochs:                 3
+      Total Layers:           4
+      Hidden Layers:          2
+      Inputs:                 784
+      Outputs:                10
+      Nodes in Hidden Layers: 60
+      Batch Size:             5
+      Learning Rate:          1.500000
+      Initialization Seed:    1515351426
+      Initialization File:    N/A
+      Epochs:                 3
   --------------------------------------
 
   Epoch 0
-        Training - 100%
-        Testing  - 100%
-        Total Score: 8512.000000
+      Training - 100%
+      Testing  - 100%
+      Total Score: 8512.000000
   Epoch 1
-        Training - 100%
-        Testing  - 100%
-        Total Score: 9064.000000
+      Training - 100%
+      Testing  - 100%
+      Total Score: 9064.000000
   Epoch 2
-        Training - 100%
-        Testing  - 100%
-        Total Score: 9207.000000
+      Training - 100%
+      Testing  - 100%
+      Total Score: 9207.000000
   ```
 
 
-#### Sample MNIST loader by Nuri Park https://github.com/projectgalateia/mnist
+#### Sample MNIST loader by Nuri Park
+
+https://github.com/projectgalateia/mnist
