@@ -47,7 +47,6 @@ The goal of this project is to create a _fast_ neural network that can solve big
 '/ )\ ).__. )      / / /_/ / /__/ ,< /  __/ /_/ /
 ' <' `/ ._/'/   __/ /\____/\___/_/|_|\___/\__, /
      ` /     /   /___/                     /____/ v0.0.0
-  ```
 
   Reporting from processor Gregs-MacBook-Pro.local, rank 0 of 4
   Reporting from processor Gregs-MacBook-Pro.local, rank 2 of 4
