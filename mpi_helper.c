@@ -134,13 +134,13 @@ sample_manager create_sample_manager(unsigned int samples, unsigned short int ba
     else if (type_code == TESTING_DATA) strcpy(type, "testing");
     else {
         *err = 1;
-        if (manager->master) printf("    Error: Invalid sample type.\n");
+        if (manager->master) printf(KRED "    Error: Invalid sample type.\n" KNRM);
     }
 
     if (!(*err)) {
         if (world_size > round_up_multiple(samples, batch_size) / batch_size) {
             *err = 1;
-            if (manager->master) printf("    Error: Too many processes, too few %s samples, or too large of a batch size.\n", type);
+            if (manager->master) printf(KRED "    Error: Too many processes, too few %s samples, or too large of a batch size.\n" KNRM, type);
         }
         else {
             sample_manager.base = round_up_multiple(samples / world_size, batch_size);
@@ -166,8 +166,8 @@ sample_manager create_sample_manager(unsigned int samples, unsigned short int ba
                 printf("    Process %u will handle %u %s samples (%u batches)\n",
                     manager->rank, sample_manager.local, type, sample_manager.batches);
                 if (sample_manager.extra > 0) {
-                    printf("    WARNING: Ignoring last %u %s samples. To avoid this, make sure your %s "
-                           "sample size is evenly divisible by your batch size.\n",
+                    printf(KYEL "    WARNING: Ignoring last %u %s samples. To avoid this, make sure your %s "\
+                           "sample size is evenly divisible by your batch size.\n" KNRM,
                             sample_manager.extra, type, type);
                 }
             }
