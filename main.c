@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
         testing_file = jcky_open_file(cli.testing_filename);
         if (testing_file.stream == NULL) {
-            jcky_close_file(training_file);
+            jcky_close_file(&training_file);
             goto finalize;
         }
     }
@@ -206,8 +206,8 @@ int main(int argc, char **argv) {
     FREE_TIMERS
     destroy_mpi_manager(&mpi_manager);
     destroy_meta_nn(&neural_net);
-    jcky_close_file(training_file);
-    jcky_close_file(testing_file);
+    jcky_close_file(&training_file);
+    jcky_close_file(&testing_file);
 finalize:
     MPI_Finalize();
 	return 0;

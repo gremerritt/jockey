@@ -26,7 +26,7 @@ char jcky_test_file(char *filename);
 unsigned int jcky_get_num_inputs(jcky_file file);
 unsigned int jcky_get_num_outputs(jcky_file file);
 jcky_file jcky_open_file(char *filename);
-char jcky_close_file(jcky_file file);
+char jcky_close_file(jcky_file *file);
 unsigned char jcky_file_byte_offset();
 
 

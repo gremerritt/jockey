@@ -39,7 +39,8 @@ enum type_identifiers{JCKY_FLOAT, JCKY_DOUBLE};
 
 // Colors
 #define KNRM "\x1B[0m"
-#define YEL  "\x1B[33m"
+#define KYEL "\x1B[33m"
+#define KRED "\x1B[31m"
 
 
 #endif

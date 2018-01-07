@@ -72,7 +72,7 @@ void write_model(struct meta_neural_net *meta, char *filename) {
         fclose(stream);
     }
     else {
-        printf(YEL "WARNING: Unabled to write model file %s\n." KNRM, filename);
+        printf(KYEL "WARNING: Unabled to write model file %s\n." KNRM, filename);
     }
 }
 
@@ -91,7 +91,7 @@ char read_model_bulk(struct meta_neural_net *meta, char *filename) {
         fclose(stream);
     }
     else {
-        printf(YEL "\nWARNING: Unabled to read model file %s\n. " KNRM, filename);
+        printf(KYEL "\nWARNING: Unabled to read model file %s\n. " KNRM, filename);
     }
 
     return err;
@@ -100,7 +100,7 @@ char read_model_bulk(struct meta_neural_net *meta, char *filename) {
 FILE * open_model_file(char *filename) {
     FILE *stream = fopen(filename, "rb");
     if (stream == NULL) {
-        printf(YEL "\nWARNING: Unabled to read model file %s\n. " KNRM, filename);
+        printf(KYEL "\nWARNING: Unabled to read model file %s\n. " KNRM, filename);
     }
 
     return stream;
@@ -121,11 +121,11 @@ char validate_model_file(struct meta_neural_net *meta, char *filename) {
         expected_length = container_length(meta) * sizeof(nn_type);
 
         if (file_length == expected_length) err = 0;
-        else printf(YEL "\nWARNING: The architecture of the neural network in the %s model "\
+        else printf(KYEL "\nWARNING: The architecture of the neural network in the %s model "\
                     "file does not match the current neural network architecture. " KNRM, filename);
     }
     else {
-        printf(YEL "\nWARNGING: Unabled to read model file %s. " KNRM, filename);
+        printf(KYEL "\nWARNGING: Unabled to read model file %s. " KNRM, filename);
     }
 
     return err;

@@ -21,7 +21,7 @@ char jcky_write_file(
     unsigned int i;
 
     if (filename == NULL) {
-        printf("No filename provided.");
+        printf(KRED "\nError: No filename provided." KNRM);
         return 1;
     }
 
@@ -42,7 +42,7 @@ char jcky_write_file(
             type = (unsigned char)JCKY_DOUBLE;
             break;
         default:
-            printf("Invalid nn_type. Must be one of: float, double.\n");
+            printf(KRED "\nError: Invalid nn_type. Must be one of: float, double.\n" KNRM);
             return 1;
     }
 
@@ -64,7 +64,7 @@ char jcky_write_file(
         fclose(file);
     }
     else {
-        printf("Unable to write to data file.\n");
+        printf(KRED "\nError: Unable to open file for writing.\n" KNRM);
         return 1;
     }
 
@@ -82,7 +82,6 @@ void jcky_read_record(jcky_file *file, const unsigned int record, nn_type *batch
 
 
 jcky_file jcky_open_file(char *filename) {
-    FILE *stream;
     char identifier[4];
     unsigned char type_byte, type;
     unsigned char major_version, minor_version, patch_version;
@@ -92,67 +91,66 @@ jcky_file jcky_open_file(char *filename) {
     unsigned long int offset = (unsigned long int)jcky_file_byte_offset();
     jcky_file file;
 
-    stream = fopen(filename, "rb");
-    if (stream != NULL) {
-        fread(identifier, sizeof(char), 4, stream);
+    file.stream = fopen(filename, "rb");
+    if (file.stream != NULL) {
+        fread(identifier, sizeof(char), 4, file.stream);
         if (strncmp(identifier, "JCKY", 4) != 0) {
-            printf("Error: %s is not a valid jockey file (missing identifier).\n", filename);
-            fclose(stream);
+            printf(KRED "Error: %s is not a valid jockey file (missing identifier).\n" KNRM, filename);
+            jcky_close_file(&file);
         }
         else {
-            fread(&type_byte, sizeof(unsigned char), 1, stream);
+            fread(&type_byte, sizeof(unsigned char), 1, file.stream);
             type = type_byte >> ((sizeof(unsigned char) * 8) / 2);
             switch (type) {
                 // Can maybe revist this at some point?
                 // In theory we can just catch mismatches and cast appropriately.
                 case (unsigned char)JCKY_FLOAT:
                     if (sizeof(nn_type) != sizeof(float)) {
-                        printf("Error: %s has incorrect data type. File uses float, but Jockey is compiled with double.\n", filename);
-                        fclose(stream);
+                        printf(KRED "Error: %s has incorrect data type. File uses float, but Jockey is compiled with double.\n" KNRM, filename);
+                        jcky_close_file(&file);
                     }
                     bytes_per_record = sizeof(float);
                     break;
                 case (unsigned char)JCKY_DOUBLE:
                     if (sizeof(nn_type) != sizeof(double)) {
-                        printf("Error: %s has incorrect data type. File uses double, but Jockey is compiled with float.\n", filename);
-                        fclose(stream);
+                        printf(KRED "Error: %s has incorrect data type. File uses double, but Jockey is compiled with float.\n" KNRM, filename);
+                        jcky_close_file(&file);
                     }
                     bytes_per_record = sizeof(double);
                     break;
                 default:
-                    printf("Error: Invalid type identifier in %s.\n", filename);
-                    fclose(stream);
+                    printf(KRED "Error: Invalid type identifier in %s.\n" KNRM, filename);
+                    jcky_close_file(&file);
             }
 
-            if (stream != NULL) {
-                fread(&major_version, sizeof(unsigned char), 1, stream);
-                fread(&minor_version, sizeof(unsigned char), 1, stream);
-                fread(&patch_version, sizeof(unsigned char), 1, stream);
+            if (file.stream != NULL) {
+                fread(&major_version, sizeof(unsigned char), 1, file.stream);
+                fread(&minor_version, sizeof(unsigned char), 1, file.stream);
+                fread(&patch_version, sizeof(unsigned char), 1, file.stream);
                 // Add any version checks here
 
-                fread(&data_len, sizeof(unsigned int), 1, stream);
-                fread(&targets_len, sizeof(unsigned int), 1, stream);
-                fread(&records, sizeof(unsigned int), 1, stream);
+                fread(&data_len, sizeof(unsigned int), 1, file.stream);
+                fread(&targets_len, sizeof(unsigned int), 1, file.stream);
+                fread(&records, sizeof(unsigned int), 1, file.stream);
                 expected_file_size = (sizeof(nn_type) * records * (data_len + targets_len)) + offset;
                 if (expected_file_size > LONG_MAX) {
-                    printf("Warning: Unable verify correct file length for %s.\n", filename);
+                    printf(KYEL "Warning: Unable verify correct file length for %s.\n" KNRM, filename);
                 }
                 else {
-                    fseek(stream, 0, SEEK_END);
-                    file_size = ftell(stream);
+                    fseek(file.stream, 0, SEEK_END);
+                    file_size = ftell(file.stream);
                     if (file_size != expected_file_size) {
-                        printf("Error: File size mismatch for %s.\n", filename);
-                        fclose(stream);
+                        printf(KRED "Error: File size mismatch for %s.\n" KNRM, filename);
+                        jcky_close_file(&file);
                     }
                 }
             }
         }
     }
     else {
-        printf("Error: Unable to read %s.\n", filename);
+        printf(KRED "Error: Unable to read %s.\n" KNRM, filename);
     }
 
-    file.stream = stream;
     file.records = records;
     file.datum_size = bytes_per_record;
     file.bytes_per_data = bytes_per_record * data_len;
@@ -165,8 +163,10 @@ jcky_file jcky_open_file(char *filename) {
 }
 
 
-char jcky_close_file(jcky_file file) {
-    return (char)fclose(file.stream);
+char jcky_close_file(jcky_file *file) {
+    char ret = (char)fclose(file->stream);
+    file->stream = NULL;
+    return ret;
 }
 
 

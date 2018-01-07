@@ -239,7 +239,7 @@ void nn_init_logical(struct meta_neural_net *meta, jcky_cli *cli) {
         }
         if (model_file == NULL) {
             init_gaussian = 1;
-            printf(YEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
+            printf(KYEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
         }
     }
     if (init_gaussian) meta->seed = set_seed(cli->seed);
@@ -309,7 +309,7 @@ void nn_init_contiguous(struct meta_neural_net *meta, jcky_cli *cli) {
         init_gaussian = validate_model_file(meta, cli->init_model_filename);
         if (!init_gaussian) init_gaussian = read_model_bulk(meta, cli->init_model_filename);
         if (init_gaussian) {
-            printf(YEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
+            printf(KYEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
         }
     }
 
