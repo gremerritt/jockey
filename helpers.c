@@ -57,11 +57,11 @@ help_text() {
     printf("        Flag to run with verbose output.\n");
     printf("    --write/-w\n");
     printf("        Flag to call to the 'hooks.write_file' function'.\n");
-    // printf("    --no-save\n");
-    // printf("        Flag to ONLY save the neural network directly before the program\n");
-    // printf("        terminates.\n");
-    // printf("        Default: Save the neural network after each epoch. This will\n");
-    // printf("                 create a file 'neural_net.jockey' which \n");
+    printf("    --no-save\n");
+    printf("        Flag to ONLY save the neural network directly before the program\n");
+    printf("        terminates.\n");
+    printf("        Default: Save the neural network after each epoch. This will\n");
+    printf("                 create a file 'neural_net.jockey' which \n");
     printf("    --no-timing\n");
     printf("        Flag to ONLY save the timing report directly before the prorgam\n");
     printf("        terminates.\n");
@@ -74,6 +74,10 @@ help_text() {
     printf("        Path to training file. Required (unless running with the --write flag).\n");
     printf("    --testing-filename/--testing-file/--test (str)\n");
     printf("        Path to testing file. Required (unless running with the --write flag).\n");
+    printf("    --model-filename/--model-file/--model (str)\n");
+    printf("        Path to file to write model into.\n");
+    printf("    --init-model-filename/--init-model-file/--init-model (str)\n");
+    printf("        Path to model file used to initialize the neural network.\n");
     printf("    --hidden-layers/-hl (int)\n");
     printf("        Number of hidden layers.\n");
     printf("        Default: %i\n", DEFAULT_NUM_HIDDEN_LAYERS);
@@ -133,8 +137,11 @@ unsigned char process_command_line(
     cli->seed = -1;  // Signal to generate a random seed
     cli->testing_filename[0] = '\0';
     cli->training_filename[0] = '\0';
+    cli->init_model_filename[0] = '\0';
+    strcpy(cli->model_filename, JCKY_MODEL_FILENAME);
     cli->verbose = 0;
     cli->no_timing = 0;
+    cli->no_save = 0;
 
 	for (i=1; i<argc; i++) {
 		char *option = argv[i];
@@ -152,6 +159,10 @@ unsigned char process_command_line(
         }
         else if (strncmp(option, "--no-timing", 11) == 0) {
             cli->no_timing = 1;
+            continue;
+        }
+        else if (strncmp(option, "--no-save", 9) == 0) {
+            cli->no_save = 1;
             continue;
         }
         else if (strncmp(option, "--help", 6) == 0 ||
@@ -258,6 +269,22 @@ unsigned char process_command_line(
             size_t testing_filename_len = strlen(val);
             strncpy(cli->testing_filename, val, 127);
             cli->testing_filename[(testing_filename_len > 126) ? 127 : testing_filename_len] = '\0';
+        }
+        else if (strncmp(option, "--init-model-filename", 21) == 0 ||
+                 strncmp(option, "--init-model-file", 17) == 0 ||
+                 strncmp(option, "--init-model", 12) == 0) {
+            if (val == NULL) continue;
+            size_t init_model_filename_len = strlen(val);
+            strncpy(cli->init_model_filename, val, 127);
+            cli->init_model_filename[(init_model_filename_len > 126) ? 127 : init_model_filename_len] = '\0';
+        }
+        else if (strncmp(option, "--model-filename", 16) == 0 ||
+                 strncmp(option, "--model-file", 12) == 0 ||
+                 strncmp(option, "--model", 7) == 0) {
+            if (val == NULL) continue;
+            size_t model_filename_len = strlen(val);
+            strncpy(cli->model_filename, val, 127);
+            cli->model_filename[(model_filename_len > 126) ? 127 : model_filename_len] = '\0';
         }
 	}
 

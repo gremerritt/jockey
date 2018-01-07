@@ -2,7 +2,11 @@
 #define RANDOMIZING_HELPERS_H
 
 
-int generate_guassian_distribution(double *numbers, int size, int seed);
+#include "constants.h"
+
+
+int set_seed(int seed);
+void generate_guassian_distribution(nn_type *numbers, int size);
 void shuffle(unsigned int *array, int size);
 
 

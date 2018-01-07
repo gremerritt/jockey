@@ -76,16 +76,17 @@ struct meta_neural_net {
 
 typedef struct functions {
     void (*alloc)(struct meta_neural_net *, neural_net *);
-    void (*init)(struct meta_neural_net *, int);
+    void (*init)(struct meta_neural_net *, jcky_cli *);
     void (*copy)(struct meta_neural_net *, const unsigned char, const unsigned char);
     void (*get_change)(struct meta_neural_net *);
     void (*apply_changes)(struct meta_neural_net *);
 } functions;
 
+unsigned long int container_length(struct meta_neural_net *meta);
 void meta_nn_alloc(struct meta_neural_net *meta);
 void nn_alloc_cms(struct meta_neural_net *meta, const unsigned short int num);
-void nn_init_contiguous(struct meta_neural_net *meta, int seed);
-void nn_init_logical(struct meta_neural_net *meta, int seed);
+void nn_init_contiguous(struct meta_neural_net *meta, jcky_cli *cli);
+void nn_init_logical(struct meta_neural_net *meta, jcky_cli *cli);
 void nn_copy_contiguous(struct meta_neural_net *meta, const unsigned char trgt, const unsigned char src);
 void nn_copy_logical(struct meta_neural_net *meta, const unsigned char trgt, const unsigned char src);
 void destroy_meta_nn(struct meta_neural_net *meta);

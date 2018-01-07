@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "constants.h"
+
 
 int generate_random_int() {
     // we're generating two random ints using the Rand() method, then putting
@@ -24,13 +26,18 @@ int generate_random_int() {
 }
 
 
-int generate_guassian_distribution(double *numbers, int size, int seed) {
+int set_seed(int seed) {
     if (seed == -1) {
         seed = time(NULL);
     }
 
     srand(seed);
 
+    return seed;
+}
+
+
+void generate_guassian_distribution(nn_type *numbers, int size) {
     int i;
     for (i=0; i<size; i+=2) {
         // Generate two (pseudo)random variables in uniform distribution (1,0)
@@ -38,19 +45,17 @@ int generate_guassian_distribution(double *numbers, int size, int seed) {
         int U_upper = generate_random_int();
         int V_upper = generate_random_int();
 
-        double U = (double)U_upper / RAND_MAX;
-        double V = (double)V_upper / RAND_MAX;
+        nn_type U = (nn_type)U_upper / RAND_MAX;
+        nn_type V = (nn_type)V_upper / RAND_MAX;
 
-        double X = sqrt(-2 * log(U)) * cos(2 * M_PI * V);
-        double Y = sqrt(-2 * log(U)) * sin(2 * M_PI * V);
+        nn_type X = sqrt(-2 * log(U)) * cos(2 * M_PI * V);
+        nn_type Y = sqrt(-2 * log(U)) * sin(2 * M_PI * V);
 
         numbers[i]   = X;
         if (i+1 < size) {
             numbers[i+1] = Y;
         }
-    }
-
-    return seed;
+    };
 }
 
 

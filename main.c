@@ -8,6 +8,7 @@
 #include "helpers.h"
 #include "hooks.h"
 #include "matrix_helpers.h"
+#include "model_helpers.h"
 #include "mpi_helper.h"
 #include "neural_net.h"
 #include "randomizing_helpers.h"
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
     );
 
     if (mpi_manager.master) {
-        neural_net.functions->init(&neural_net, cli.seed);
+        neural_net.functions->init(&neural_net, &cli);
         nn_alloc_cms(&neural_net, mpi_manager.child_procs);
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
     jcky_sync_neural_net(&neural_net, &mpi_manager, 0);
 
     if (mpi_manager.master) {
-        printf("--------------------------------------\n");
+        printf("\n--------------------------------------\n");
         printf("Configuration:\n");
     	printf("    Total Layers:           %i\n", neural_net.number_of_hidden_layers+2);
     	printf("    Hidden Layers:          %i\n", neural_net.number_of_hidden_layers);
@@ -88,7 +89,10 @@ int main(int argc, char **argv) {
     	printf("    Nodes in Hidden Layers: %i\n", neural_net.number_of_nodes_in_hidden_layers);
     	printf("    Batch Size:             %i\n", neural_net.batch_size);
     	printf("    Learning Rate:          %f\n", neural_net.eta);
-        printf("    Initialization Seed:    %i\n", neural_net.seed);
+        printf("    Initialization Seed:    ");
+        if (neural_net.seed != -1) printf("%i\n", neural_net.seed);
+        else printf("N/A\n");
+        printf("    Initialization File:    %s\n", (neural_net.seed == -1) ? cli.init_model_filename : "N/A");
         printf("    Epochs:                 %i\n", cli.epochs);
     	printf("--------------------------------------\n\n");
     }
@@ -154,6 +158,10 @@ int main(int argc, char **argv) {
         }
         jcky_sync_neural_net(&neural_net, &mpi_manager, 1);
         END_TIME_SYNC
+
+        if (mpi_manager.master && (!cli.no_save || epoch == cli.epochs-1)) {
+            write_model(&neural_net, cli.model_filename);
+        }
 
 		START_TIME_TESTING
         if (mpi_manager.master) printf("    Testing");

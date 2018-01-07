@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "constants.h"
 #include "hooks.h"
 #include "matrix_helpers.h"
+#include "model_helpers.h"
 #include "mpi_helper.h"
 #include "neural_net.h"
 #include "randomizing_helpers.h"
@@ -53,6 +55,7 @@ struct meta_neural_net create_neural_net(
     nn.num_blocks = cli->num_blocks;
     nn.block_size = cli->block_size;
     nn.functions = NN_FUNCTIONS[cli->memory_layout];
+    nn.seed = -1;
 
     meta_nn_alloc(&nn);
 
@@ -94,6 +97,25 @@ void meta_nn_alloc(struct meta_neural_net *meta) {
 }
 
 
+unsigned long int container_length(struct meta_neural_net *meta) {
+    const unsigned int number_of_hidden_layers = meta->number_of_hidden_layers;
+    const unsigned int number_of_nodes_in_hidden_layers = meta->number_of_nodes_in_hidden_layers;
+    const unsigned int number_of_inputs = meta->number_of_inputs;
+    const unsigned int number_of_outputs = meta->number_of_outputs;
+    unsigned long int container_length = (
+        (number_of_hidden_layers * number_of_nodes_in_hidden_layers) + // bias matrices in hidden layers
+        number_of_outputs + // bias vector for output layer
+        number_of_nodes_in_hidden_layers * ( // weights
+            number_of_inputs + // input layer
+            ((number_of_hidden_layers-1) * number_of_nodes_in_hidden_layers) + // hidden layers
+            number_of_outputs // output layer
+        )
+    );
+
+    return container_length;
+}
+
+
 void nn_alloc_logical(struct meta_neural_net *meta, neural_net *nn) {
     int i;
     const unsigned int number_of_hidden_layers = meta->number_of_hidden_layers;
@@ -101,14 +123,7 @@ void nn_alloc_logical(struct meta_neural_net *meta, neural_net *nn) {
     const unsigned int number_of_inputs = meta->number_of_inputs;
     const unsigned int number_of_outputs = meta->number_of_outputs;
     unsigned int number_of_matrix_elements = number_of_inputs * number_of_nodes_in_hidden_layers;
-    nn->container_len =
-        (number_of_hidden_layers * number_of_nodes_in_hidden_layers) + // bias matrices in hidden layers
-        number_of_outputs + // bias vector for output layer
-        number_of_nodes_in_hidden_layers * ( // weights
-            number_of_inputs + // input layer
-            (number_of_hidden_layers * number_of_nodes_in_hidden_layers ) + // hidden layers
-            number_of_outputs // output layer
-        );
+    nn->container_len = container_length(meta);
 
     //---------------------------------------------------------------------------
     // allocate space for bias, z_vector, activation and delta arrays
@@ -151,14 +166,7 @@ void nn_alloc_contiguous(struct meta_neural_net *meta, neural_net *nn) {
     unsigned long int number_of_matrix_elements = number_of_inputs * number_of_nodes_in_hidden_layers;
     unsigned long int offset = 0;
     unsigned short int i;
-    const unsigned long int container_len =
-        (number_of_hidden_layers * number_of_nodes_in_hidden_layers) + // bias matrices in hidden layers
-        number_of_outputs + // bias vector for output layer
-        number_of_nodes_in_hidden_layers * ( // weights
-            number_of_inputs + // input layer
-            (number_of_hidden_layers * number_of_nodes_in_hidden_layers ) + // hidden layers
-            number_of_outputs // output layer
-        );
+    const unsigned long int container_len = container_length(meta);
 
     nn->container_len = container_len;
     nn->container = (nn_type*)malloc( container_len * sizeof( nn_type ) );
@@ -206,8 +214,14 @@ void nn_alloc_cms(struct meta_neural_net *meta, const unsigned short int len) {
 }
 
 
+void init_from_gaussian_or_file(char init_gaussian, nn_type *dest, int len, FILE *model_file) {
+    if (init_gaussian) generate_guassian_distribution(dest, len);
+    else read_model_file(dest, len, model_file);
+}
+
+
 // Initialize the bias and weight vectors
-void nn_init_logical(struct meta_neural_net *meta, int seed) {
+void nn_init_logical(struct meta_neural_net *meta, jcky_cli *cli) {
     const unsigned int number_of_hidden_layers = meta->number_of_hidden_layers;
     const unsigned int number_of_nodes_in_hidden_layers = meta->number_of_nodes_in_hidden_layers;
     const unsigned int number_of_inputs = meta->number_of_inputs;
@@ -215,56 +229,97 @@ void nn_init_logical(struct meta_neural_net *meta, int seed) {
     unsigned int number_of_matrix_elements = number_of_inputs * number_of_nodes_in_hidden_layers;
 
     int i, j, random_count = 0;
-    double *random = malloc( meta->nns[JCKY_NN_BASE].container_len * sizeof(double) );
+    char init_gaussian = 1;
+    FILE *model_file = NULL;
 
-    meta->seed = generate_guassian_distribution(random, meta->nns[JCKY_NN_BASE].container_len, seed);
+    if (strlen(cli->init_model_filename) != 0) {
+        init_gaussian = validate_model_file(meta, cli->init_model_filename);
+        if (!init_gaussian) {
+            model_file = open_model_file(cli->init_model_filename);
+        }
+        if (model_file == NULL) {
+            init_gaussian = 1;
+            printf(YEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
+        }
+    }
+    if (init_gaussian) meta->seed = set_seed(cli->seed);
 
     //---------------------------------------------------------------------------
     // Initialize bias vectors
 
     // Hidden layers
     for (i=0; i<number_of_hidden_layers; i++) {
-        for (j=0; j<number_of_nodes_in_hidden_layers; j++) {
-            meta->nns[JCKY_NN_BASE].bias[i][j] = random[random_count++];
-        }
+        init_from_gaussian_or_file(
+            init_gaussian,
+            meta->nns[JCKY_NN_BASE].bias[i],
+            number_of_nodes_in_hidden_layers,
+            model_file
+        );
     }
 
     // Output layer
-    for (i=0; i<number_of_outputs; i++) {
-        meta->nns[JCKY_NN_BASE].bias[number_of_hidden_layers][i] = random[random_count++];
-    }
+    init_from_gaussian_or_file(
+        init_gaussian,
+        meta->nns[JCKY_NN_BASE].bias[number_of_hidden_layers],
+        number_of_outputs,
+        model_file
+    );
     //---------------------------------------------------------------------------
 
     //---------------------------------------------------------------------------
     // Initialize weight vectors
 
     // Input layer to first hidden layer
-    for (i=0; i<number_of_matrix_elements; i++) {
-        meta->nns[JCKY_NN_BASE].weight[0][i] = random[random_count++];
-    }
+    init_from_gaussian_or_file(
+        init_gaussian,
+        meta->nns[JCKY_NN_BASE].weight[0],
+        number_of_matrix_elements,
+        model_file
+    );
 
     // Between hidden layers
     number_of_matrix_elements = number_of_nodes_in_hidden_layers * number_of_nodes_in_hidden_layers;
     for (i=1; i<number_of_hidden_layers; i++) {
-        for (j=0; j<number_of_matrix_elements; j++) {
-            meta->nns[JCKY_NN_BASE].weight[i][j] = random[random_count++];
-        }
+        init_from_gaussian_or_file(
+            init_gaussian,
+            meta->nns[JCKY_NN_BASE].weight[i],
+            number_of_matrix_elements,
+            model_file
+        );
     }
 
     // Last hidden layer to output layer
     number_of_matrix_elements = number_of_outputs * number_of_nodes_in_hidden_layers;
-    for (i=0; i<number_of_matrix_elements; i++) {
-        meta->nns[JCKY_NN_BASE].weight[number_of_hidden_layers][i] = random[random_count++];
-    }
+    init_from_gaussian_or_file(
+        init_gaussian,
+        meta->nns[JCKY_NN_BASE].weight[number_of_hidden_layers],
+        number_of_matrix_elements,
+        model_file
+    );
     //---------------------------------------------------------------------------
 
-    free(random);
+    if (!init_gaussian) fclose(model_file);
 }
 
 
-void nn_init_contiguous(struct meta_neural_net *meta, int seed) {
-    meta->seed = generate_guassian_distribution(
-        meta->nns[JCKY_NN_BASE].container, meta->nns[JCKY_NN_BASE].container_len, seed);
+void nn_init_contiguous(struct meta_neural_net *meta, jcky_cli *cli) {
+    char init_gaussian = 1;
+
+    if (strlen(cli->init_model_filename) != 0) {
+        init_gaussian = validate_model_file(meta, cli->init_model_filename);
+        if (!init_gaussian) init_gaussian = read_model_bulk(meta, cli->init_model_filename);
+        if (init_gaussian) {
+            printf(YEL "Initializing neural net with a random gaussian distribution.\n" KNRM);
+        }
+    }
+
+    if (init_gaussian) {
+        meta->seed = set_seed(cli->seed);
+        generate_guassian_distribution(
+            meta->nns[JCKY_NN_BASE].container,
+            meta->nns[JCKY_NN_BASE].container_len
+        );
+    }
 }
 
 

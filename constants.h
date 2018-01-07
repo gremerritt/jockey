@@ -35,5 +35,11 @@ enum type_identifiers{JCKY_FLOAT, JCKY_DOUBLE};
 #define JCKY_TIMING
 #define JCKY_TIMING_FILENAME "timing.jockey.csv"
 
+#define JCKY_MODEL_FILENAME "model.jockey"
+
+// Colors
+#define KNRM "\x1B[0m"
+#define YEL  "\x1B[33m"
+
 
 #endif

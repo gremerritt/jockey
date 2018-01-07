@@ -9,10 +9,11 @@
 typedef struct jcky_cli {
     int number_of_hidden_layers, number_of_nodes_in_hidden_layers, batch_size, seed;
     nn_type learning_rate;
-    unsigned char memory_layout, num_blocks, action, verbose, no_timing;
+    unsigned char memory_layout, num_blocks, action, verbose, no_timing, no_save;
     unsigned int block_size;
     unsigned short int epochs;
     char training_filename[128], testing_filename[128];
+    char init_model_filename[128], model_filename[128];
     jcky_file training_file, testing_file;
 } jcky_cli;
 
